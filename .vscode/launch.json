@@ -1,0 +1,103 @@
+{
+	// 使用 IntelliSense 了解相关属性。
+	// 悬停以查看现有属性的描述。
+	// 欲了解更多信息，请访问: https://go.microsoft.com/fwlink/?linkid=830387
+	"version": "0.2.0",
+	"configurations": [
+		// ========== 编译后运行 ==========
+		{
+			"name": "编译运行 - 编辑器",
+			"type": "cppvsdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/bin/godot.windows.editor.dev.x86_64.exe",
+			"args": [
+				"--editor"
+			],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}",
+			"environment": [],
+			"console": "internalConsole",
+			"visualizerFile": "${workspaceFolder}/platform/windows/godot.natvis",
+			"preLaunchTask": "build"
+		},
+		{
+			"name": "编译运行 - 项目",
+			"type": "cppvsdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/bin/godot.windows.editor.dev.x86_64.exe",
+			"args": [
+				"--editor",
+				"--path",
+				"D:/GIT/HelloGodot"
+			],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}",
+			"environment": [],
+			"console": "internalConsole",
+			"visualizerFile": "${workspaceFolder}/platform/windows/godot.natvis",
+			"preLaunchTask": "build"
+		},
+		{
+			"name": "编译运行 - 游戏",
+			"type": "cppvsdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/bin/godot.windows.editor.dev.x86_64.exe",
+			"args": [
+				"--path",
+				"D:/GIT/HelloGodot"
+			],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}",
+			"environment": [],
+			"console": "externalTerminal",
+			"visualizerFile": "${workspaceFolder}/platform/windows/godot.natvis",
+			"preLaunchTask": "build"
+		},
+		// ========== 直接运行 ==========
+		{
+			"name": "直接运行 - 编辑器",
+			"type": "cppvsdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/bin/godot.windows.editor.dev.x86_64.exe",
+			"args": [
+				"--editor"
+			],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}",
+			"environment": [],
+			"console": "internalConsole",
+			"visualizerFile": "${workspaceFolder}/platform/windows/godot.natvis"
+		},
+		{
+			"name": "直接运行 - 项目",
+			"type": "cppvsdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/bin/godot.windows.editor.dev.x86_64.exe",
+			"args": [
+				"--editor",
+				"--path",
+				"D:/GIT/HelloGodot"
+			],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}",
+			"environment": [],
+			"console": "internalConsole",
+			"visualizerFile": "${workspaceFolder}/platform/windows/godot.natvis"
+		},
+		{
+			"name": "直接运行 - 游戏",
+			"type": "cppvsdbg",
+			"request": "launch",
+			"program": "${workspaceFolder}/bin/godot.windows.editor.dev.x86_64.exe",
+			"args": [
+				"--path",
+				"D:/GIT/HelloGodot"
+			],
+			"stopAtEntry": false,
+			"cwd": "${workspaceFolder}",
+			"environment": [],
+			"console": "internalConsole",
+			"visualizerFile": "${workspaceFolder}/platform/windows/godot.natvis"
+		}
+	]
+}

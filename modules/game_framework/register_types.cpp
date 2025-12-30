@@ -31,6 +31,7 @@
 #include "register_types.h"
 
 #include "game_framework.h"
+#include "world_item.h"
 
 #include "core/object/class_db.h"
 
@@ -47,6 +48,7 @@ void initialize_game_framework_module(ModuleInitializationLevel p_level) {
 
 	// 注册你的类到 Godot 的类系统
 	GDREGISTER_CLASS(GameFramework);
+	GDREGISTER_CLASS(WorldItem);
 	
 	// 你可以在这里注册更多的类
 	// GDREGISTER_CLASS(YourOtherClass);

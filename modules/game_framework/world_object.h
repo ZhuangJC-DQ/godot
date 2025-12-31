@@ -95,8 +95,8 @@ public:
 	TypedArray<Dictionary> harvest(Object *p_actor);
 
 	// === 序列化 ===
-	Dictionary serialize() const;
-	void deserialize(const Dictionary &p_data);
+	virtual Dictionary serialize() const;
+	virtual void deserialize(const Dictionary &p_data);
 };
 
 VARIANT_ENUM_CAST(WorldObject::ObjectType);

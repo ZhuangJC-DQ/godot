@@ -30,8 +30,12 @@
 
 #include "register_types.h"
 
+#include "character.h"
 #include "game_framework.h"
 #include "item.h"
+#include "monster.h"
+#include "npc.h"
+#include "player.h"
 #include "world_object.h"
 
 #include "core/object/class_db.h"
@@ -47,10 +51,20 @@ void initialize_game_framework_module(ModuleInitializationLevel p_level) {
 		return;
 	}
 
-	// 注册你的类到 Godot 的类系统
+	// === 核心框架 ===
 	GDREGISTER_CLASS(GameFramework);
+
+	// === 物品系统 ===
 	GDREGISTER_CLASS(Item);
+
+	// === 世界物体系统 ===
 	GDREGISTER_CLASS(WorldObject);
+
+	// === 角色系统（注意继承顺序：基类先注册）===
+	GDREGISTER_CLASS(Character);
+	GDREGISTER_CLASS(Player);
+	GDREGISTER_CLASS(NPC);
+	GDREGISTER_CLASS(Monster);
 
 	// 你可以在这里注册更多的类
 	// GDREGISTER_CLASS(YourOtherClass);

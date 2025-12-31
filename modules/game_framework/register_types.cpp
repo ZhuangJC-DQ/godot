@@ -36,7 +36,13 @@
 #include "monster.h"
 #include "npc.h"
 #include "player.h"
+#include "player_controller_3d.h"
 #include "world_object.h"
+
+// UI组件
+#include "ui/container_panel.h"
+#include "ui/game_ui.h"
+#include "ui/item_slot.h"
 
 #include "core/object/class_db.h"
 
@@ -66,8 +72,13 @@ void initialize_game_framework_module(ModuleInitializationLevel p_level) {
 	GDREGISTER_CLASS(NPC);
 	GDREGISTER_CLASS(Monster);
 
-	// 你可以在这里注册更多的类
-	// GDREGISTER_CLASS(YourOtherClass);
+	// === 3D 控制器 ===
+	GDREGISTER_CLASS(PlayerController3D);
+
+	// === UI组件 ===
+	GDREGISTER_CLASS(GameUI);
+	GDREGISTER_CLASS(ItemSlot);
+	GDREGISTER_CLASS(ContainerPanel);
 
 	// 如果需要创建单例（全局访问的对象）
 	// GameFramework *game_framework = memnew(GameFramework);

@@ -28,7 +28,7 @@
 			"args": [
 				"--editor",
 				"--path",
-				"D:/GIT/HelloGodot"
+				"${workspaceFolder}/Project/cpp-model"
 			],
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}",
@@ -44,7 +44,7 @@
 			"program": "${workspaceFolder}/bin/godot.windows.editor.dev.x86_64.exe",
 			"args": [
 				"--path",
-				"D:/GIT/HelloGodot"
+				"${workspaceFolder}/Project/cpp-model"
 			],
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}",
@@ -76,7 +76,7 @@
 			"args": [
 				"--editor",
 				"--path",
-				"D:/GIT/HelloGodot"
+				"${workspaceFolder}/Project/cpp-model"
 			],
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}",
@@ -91,7 +91,7 @@
 			"program": "${workspaceFolder}/bin/godot.windows.editor.dev.x86_64.exe",
 			"args": [
 				"--path",
-				"D:/GIT/HelloGodot"
+				"${workspaceFolder}/Project/cpp-model"
 			],
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}",

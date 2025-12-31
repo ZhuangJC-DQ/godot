@@ -10,6 +10,5 @@ env_game = env_modules.Clone()
 # 添加源文件到编译列表
 env_game.add_source_files(env.modules_sources, "*.cpp")
 
-# 如果有子目录的源文件
-# env_game.add_source_files(env.modules_sources, "core/*.cpp")
-# env_game.add_source_files(env.modules_sources, "systems/*.cpp")
+# UI子目录
+env_game.add_source_files(env.modules_sources, "ui/*.cpp")

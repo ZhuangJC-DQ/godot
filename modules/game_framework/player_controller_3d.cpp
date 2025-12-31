@@ -4,9 +4,13 @@
 
 #include "player_controller_3d.h"
 
+#include "ui/container_panel.h"
+#include "ui/player_hud.h"
+
 #include "core/config/engine.h"
 #include "core/input/input.h"
 #include "core/input/input_event.h"
+#include "scene/main/canvas_layer.h"
 #include "scene/main/viewport.h"
 #include "scene/resources/3d/capsule_shape_3d.h"
 #include "scene/resources/3d/primitive_meshes.h"
@@ -59,6 +63,16 @@ void PlayerController3D::_bind_methods() {
 	// === 获取子节点 ===
 	ClassDB::bind_method(D_METHOD("get_camera"), &PlayerController3D::get_camera);
 	ClassDB::bind_method(D_METHOD("get_mesh_instance"), &PlayerController3D::get_mesh_instance);
+
+	// === HUD ===
+	ClassDB::bind_method(D_METHOD("set_enable_hud", "enable"), &PlayerController3D::set_enable_hud);
+	ClassDB::bind_method(D_METHOD("is_enable_hud"), &PlayerController3D::is_enable_hud);
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "enable_hud"), "set_enable_hud", "is_enable_hud");
+
+	ClassDB::bind_method(D_METHOD("get_player_hud"), &PlayerController3D::get_player_hud);
+	ClassDB::bind_method(D_METHOD("toggle_inventory"), &PlayerController3D::toggle_inventory);
+	ClassDB::bind_method(D_METHOD("show_inventory"), &PlayerController3D::show_inventory);
+	ClassDB::bind_method(D_METHOD("hide_inventory"), &PlayerController3D::hide_inventory);
 }
 
 PlayerController3D::PlayerController3D() {
@@ -74,6 +88,7 @@ void PlayerController3D::_notification(int p_what) {
 			_setup_mesh();
 			_setup_camera();
 			_update_camera_position();
+			_setup_hud();
 			set_process(true);
 			set_process_unhandled_input(true);
 		} break;
@@ -111,6 +126,14 @@ void PlayerController3D::unhandled_input(const Ref<InputEvent> &p_event) {
 			set_camera_distance(camera_distance - camera_zoom_speed);
 		} else if (mouse_button_event->get_button_index() == MouseButton::WHEEL_DOWN) {
 			set_camera_distance(camera_distance + camera_zoom_speed);
+		}
+	}
+
+	// 处理键盘 - I键切换背包
+	Ref<InputEventKey> key_event = p_event;
+	if (key_event.is_valid() && key_event->is_pressed() && !key_event->is_echo()) {
+		if (key_event->get_keycode() == Key::I) {
+			toggle_inventory();
 		}
 	}
 }
@@ -286,4 +309,74 @@ void PlayerController3D::set_camera_distance(float p_distance) {
 void PlayerController3D::set_camera_pitch(float p_pitch) {
 	camera_pitch = CLAMP(p_pitch, -89.0f, -10.0f);
 	_update_camera_position();
+}
+
+// === HUD ===
+
+void PlayerController3D::_setup_hud() {
+	if (!enable_hud) {
+		return;
+	}
+
+	// 只在非编辑器模式下创建HUD
+	if (Engine::get_singleton()->is_editor_hint()) {
+		return;
+	}
+
+	// 创建CanvasLayer用于UI（这样UI不会受3D摄像机影响）
+	CanvasLayer *ui_layer = memnew(CanvasLayer);
+	ui_layer->set_name("UILayer");
+	ui_layer->set_layer(10);  // 确保在最上层
+	add_child(ui_layer);
+
+	// 创建PlayerHUD
+	player_hud = memnew(PlayerHUD);
+	player_hud->set_name("PlayerHUD");
+	ui_layer->add_child(player_hud);
+
+	// 绑定Player数据到HUD
+	if (player_data.is_valid()) {
+		player_hud->bind_player(player_data.ptr());
+	}
+
+	// 创建背包面板（默认隐藏）
+	inventory_panel = memnew(ContainerPanel);
+	inventory_panel->set_name("InventoryPanel");
+	inventory_panel->set_title("Inventory");
+	inventory_panel->set_columns(5);
+	inventory_panel->set_anchors_preset(Control::PRESET_CENTER);
+	inventory_panel->hide();
+	ui_layer->add_child(inventory_panel);
+
+	// 绑定Player的容器到背包面板
+	if (player_data.is_valid()) {
+		inventory_panel->bind_container(player_data.ptr());
+	}
+}
+
+void PlayerController3D::set_enable_hud(bool p_enable) {
+	enable_hud = p_enable;
+}
+
+void PlayerController3D::toggle_inventory() {
+	if (inventory_panel) {
+		if (inventory_panel->is_visible()) {
+			hide_inventory();
+		} else {
+			show_inventory();
+		}
+	}
+}
+
+void PlayerController3D::show_inventory() {
+	if (inventory_panel) {
+		inventory_panel->show();
+		inventory_panel->refresh();
+	}
+}
+
+void PlayerController3D::hide_inventory() {
+	if (inventory_panel) {
+		inventory_panel->hide();
+	}
 }

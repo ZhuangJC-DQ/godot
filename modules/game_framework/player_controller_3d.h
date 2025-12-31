@@ -12,6 +12,9 @@
 #include "scene/resources/3d/capsule_shape_3d.h"
 #include "scene/resources/mesh.h"
 
+class PlayerHUD;
+class ContainerPanel;
+
 // 第三人称玩家控制器 - 博德之门风格俯视角
 class PlayerController3D : public Node3D {
 	GDCLASS(PlayerController3D, Node3D);
@@ -44,9 +47,15 @@ private:
 	bool is_rotating_camera = false;     // 是否正在旋转摄像机（右键按住）
 	Vector2 mouse_motion;                // 鼠标移动量
 
+	// === UI ===
+	bool enable_hud = true;              // 是否启用HUD
+	PlayerHUD *player_hud = nullptr;     // 玩家HUD
+	ContainerPanel *inventory_panel = nullptr;  // 背包面板
+
 	// === 内部方法 ===
 	void _setup_mesh();
 	void _setup_camera();
+	void _setup_hud();
 	void _process_input(double p_delta);
 	void _process_movement(double p_delta);
 	void _process_camera(double p_delta);
@@ -99,4 +108,14 @@ public:
 	// === 获取子节点 ===
 	Camera3D *get_camera() const { return camera; }
 	MeshInstance3D *get_mesh_instance() const { return mesh_instance; }
+
+	// === HUD ===
+	void set_enable_hud(bool p_enable);
+	bool is_enable_hud() const { return enable_hud; }
+	PlayerHUD *get_player_hud() const { return player_hud; }
+
+	// === 背包 ===
+	void toggle_inventory();
+	void show_inventory();
+	void hide_inventory();
 };

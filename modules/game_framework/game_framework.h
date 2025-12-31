@@ -27,4 +27,7 @@ public:
 	void test_map_generation();
 	void print_chunk_at(int32_t x, int32_t y);
 	void print_city(int32_t chunk_x, int32_t chunk_y, int32_t city_index);
+	void print_monster(int32_t chunk_x, int32_t chunk_y, int32_t monster_index);
+	void print_npc(int32_t chunk_x, int32_t chunk_y, int32_t npc_index);
+	void print_all_entities(int32_t chunk_x, int32_t chunk_y);
 };

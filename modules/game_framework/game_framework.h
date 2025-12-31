@@ -26,4 +26,5 @@ public:
 
 	void test_map_generation();
 	void print_chunk_at(int32_t x, int32_t y);
+	void print_city(int32_t chunk_x, int32_t chunk_y, int32_t city_index);
 };

@@ -49,7 +49,7 @@
 			"stopAtEntry": false,
 			"cwd": "${workspaceFolder}",
 			"environment": [],
-			"console": "externalTerminal",
+			"console": "internalConsole",
 			"visualizerFile": "${workspaceFolder}/platform/windows/godot.natvis",
 			"preLaunchTask": "build"
 		},

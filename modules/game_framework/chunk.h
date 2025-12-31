@@ -4,8 +4,11 @@
 
 #pragma once
 
+#include "world_object.h"
+
 #include "core/math/random_pcg.h"
 #include "core/string/ustring.h"
+#include "core/templates/vector.h"
 
 // 地块类型
 enum TileType {
@@ -37,6 +40,12 @@ struct ChunkCoord {
 	}
 };
 
+// 城市数据
+struct CityData {
+	Vector2i position;           // 在 chunk 中的位置
+	Ref<WorldObject> world_object;  // 关联的 WorldObject
+};
+
 // 区块数据
 class Chunk {
 public:
@@ -45,7 +54,18 @@ public:
 	int center_x;
 	int center_y;
 
+	// 城市列表
+	Vector<CityData> cities;
+
 	Chunk(const ChunkCoord &p_coord);
 	void generate();
+	void generate_world_objects(RandomPCG &rng);
 	String to_string(int preview_size = 32) const;
+
+	// 获取城市数量
+	int get_city_count() const { return cities.size(); }
+	// 获取指定城市的 WorldObject
+	Ref<WorldObject> get_city_object(int index) const;
+	// 打印城市信息
+	String city_to_string(int index) const;
 };

@@ -3787,7 +3787,7 @@ void Main::setup_boot_logo() {
 #if !defined(TOOLS_ENABLED) && defined(WEB_ENABLED)
 	bool show_logo = false;
 #else
-	bool show_logo = true;
+	bool show_logo = false; // 已禁用开屏 logo
 #endif
 
 	if (show_logo) { //boot logo!
@@ -4698,10 +4698,11 @@ int Main::start() {
 #endif
 	}
 
-	if (DisplayServer::get_singleton()->has_feature(DisplayServer::FEATURE_ICON) && !has_icon && OS::get_singleton()->get_bundle_icon_path().is_empty()) {
-		Ref<Image> icon = memnew(Image(app_icon_png));
-		DisplayServer::get_singleton()->set_icon(icon);
-	}
+	// 已禁用默认程序图标
+	// if (DisplayServer::get_singleton()->has_feature(DisplayServer::FEATURE_ICON) && !has_icon && OS::get_singleton()->get_bundle_icon_path().is_empty()) {
+	// 	Ref<Image> icon = memnew(Image(app_icon_png));
+	// 	DisplayServer::get_singleton()->set_icon(icon);
+	// }
 
 	if (movie_writer) {
 		movie_writer->begin(DisplayServer::get_singleton()->window_get_size(), fixed_fps, Engine::get_singleton()->get_write_movie_path());

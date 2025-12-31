@@ -31,7 +31,8 @@
 #include "register_types.h"
 
 #include "game_framework.h"
-#include "world_item.h"
+#include "item.h"
+#include "world_object.h"
 
 #include "core/object/class_db.h"
 
@@ -41,18 +42,19 @@ void initialize_game_framework_module(ModuleInitializationLevel p_level) {
 	// MODULE_INITIALIZATION_LEVEL_SERVERS - 服务器初始化
 	// MODULE_INITIALIZATION_LEVEL_SCENE - 场景系统初始化
 	// MODULE_INITIALIZATION_LEVEL_EDITOR - 编辑器初始化
-	
+
 	if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
 		return;
 	}
 
 	// 注册你的类到 Godot 的类系统
 	GDREGISTER_CLASS(GameFramework);
-	GDREGISTER_CLASS(WorldItem);
-	
+	GDREGISTER_CLASS(Item);
+	GDREGISTER_CLASS(WorldObject);
+
 	// 你可以在这里注册更多的类
 	// GDREGISTER_CLASS(YourOtherClass);
-	
+
 	// 如果需要创建单例（全局访问的对象）
 	// GameFramework *game_framework = memnew(GameFramework);
 	// Engine::get_singleton()->add_singleton(Engine::Singleton("GameFramework", GameFramework::get_singleton()));

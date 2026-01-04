@@ -214,6 +214,7 @@ cscope.po.out
 
 # Visual Studio Code
 # .vscode/
+settings.json
 *.code-workspace
 .history/
 

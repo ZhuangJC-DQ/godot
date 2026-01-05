@@ -5,70 +5,7 @@
 #include "world_object.h"
 
 void WorldObject::_bind_methods() {
-	// === 枚举绑定 ===
-	BIND_ENUM_CONSTANT(TYPE_GENERIC);
-	BIND_ENUM_CONSTANT(TYPE_CONTAINER);
-	BIND_ENUM_CONSTANT(TYPE_RESOURCE);
-	BIND_ENUM_CONSTANT(TYPE_FURNITURE);
-	BIND_ENUM_CONSTANT(TYPE_CRAFTING);
-	BIND_ENUM_CONSTANT(TYPE_INTERACTABLE);
-	BIND_ENUM_CONSTANT(TYPE_MAX);
 
-	// === 基础属性绑定 ===
-	ClassDB::bind_method(D_METHOD("set_object_id", "id"), &WorldObject::set_object_id);
-	ClassDB::bind_method(D_METHOD("get_object_id"), &WorldObject::get_object_id);
-	ADD_PROPERTY(PropertyInfo(Variant::STRING_NAME, "object_id"), "set_object_id", "get_object_id");
-
-	ClassDB::bind_method(D_METHOD("set_object_type", "type"), &WorldObject::set_object_type);
-	ClassDB::bind_method(D_METHOD("get_object_type"), &WorldObject::get_object_type);
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "object_type", PROPERTY_HINT_ENUM, "Generic,Container,Resource,Furniture,Crafting,Interactable"), "set_object_type", "get_object_type");
-
-	ClassDB::bind_method(D_METHOD("set_local_position", "position"), &WorldObject::set_local_position);
-	ClassDB::bind_method(D_METHOD("get_local_position"), &WorldObject::get_local_position);
-	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2I, "local_position"), "set_local_position", "get_local_position");
-
-	// === 容器基础方法绑定 ===
-	ClassDB::bind_method(D_METHOD("init_container", "capacity"), &WorldObject::init_container);
-	ClassDB::bind_method(D_METHOD("has_container"), &WorldObject::has_container);
-	ClassDB::bind_method(D_METHOD("get_container_capacity"), &WorldObject::get_container_capacity);
-	ClassDB::bind_method(D_METHOD("get_container_used_slots"), &WorldObject::get_container_used_slots);
-	ClassDB::bind_method(D_METHOD("get_container_empty_slots"), &WorldObject::get_container_empty_slots);
-	ClassDB::bind_method(D_METHOD("is_container_full"), &WorldObject::is_container_full);
-	ClassDB::bind_method(D_METHOD("is_container_empty"), &WorldObject::is_container_empty);
-
-	// === 容器操作方法绑定 ===
-	ClassDB::bind_method(D_METHOD("container_add_item", "item"), &WorldObject::container_add_item);
-	ClassDB::bind_method(D_METHOD("container_add_item_at", "slot", "item"), &WorldObject::container_add_item_at);
-	ClassDB::bind_method(D_METHOD("container_remove_item", "slot"), &WorldObject::container_remove_item);
-	ClassDB::bind_method(D_METHOD("container_get_item", "slot"), &WorldObject::container_get_item);
-	ClassDB::bind_method(D_METHOD("container_set_item", "slot", "item"), &WorldObject::container_set_item);
-	ClassDB::bind_method(D_METHOD("container_clear"), &WorldObject::container_clear);
-
-	// === 高级容器操作绑定 ===
-	ClassDB::bind_method(D_METHOD("container_find_item", "item_id"), &WorldObject::container_find_item);
-	ClassDB::bind_method(D_METHOD("container_count_item", "item_id"), &WorldObject::container_count_item);
-	ClassDB::bind_method(D_METHOD("container_has_item", "item_id", "quantity"), &WorldObject::container_has_item, DEFVAL(1));
-	ClassDB::bind_method(D_METHOD("container_add_items", "item_id", "quantity"), &WorldObject::container_add_items);
-	ClassDB::bind_method(D_METHOD("container_remove_items", "item_id", "quantity"), &WorldObject::container_remove_items);
-	ClassDB::bind_method(D_METHOD("container_get_all_items"), &WorldObject::container_get_all_items);
-	ClassDB::bind_method(D_METHOD("container_try_stack", "item"), &WorldObject::container_try_stack);
-
-	// === 交互方法绑定 ===
-	ClassDB::bind_method(D_METHOD("interact", "actor"), &WorldObject::interact);
-	ClassDB::bind_method(D_METHOD("harvest", "actor"), &WorldObject::harvest);
-
-	// === 序列化绑定 ===
-	ClassDB::bind_method(D_METHOD("serialize"), &WorldObject::serialize);
-	ClassDB::bind_method(D_METHOD("deserialize", "data"), &WorldObject::deserialize);
-
-	// === 初始化方法绑定 ===
-	ClassDB::bind_method(D_METHOD("setup", "object_id", "type", "position"), &WorldObject::setup);
-
-	// === 虚函数绑定（允许GDScript重写）===
-	GDVIRTUAL_BIND(_on_interact, "actor");
-	GDVIRTUAL_BIND(_on_harvest, "actor", "loot");
-	GDVIRTUAL_BIND(_on_item_added, "slot", "item");
-	GDVIRTUAL_BIND(_on_item_removed, "slot", "item");
 }
 
 WorldObject::WorldObject() = default;

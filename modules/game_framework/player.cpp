@@ -5,53 +5,7 @@
 #include "player.h"
 
 void Player::_bind_methods() {
-	// === 经验系统 ===
-	ClassDB::bind_method(D_METHOD("set_experience", "exp"), &Player::set_experience);
-	ClassDB::bind_method(D_METHOD("get_experience"), &Player::get_experience);
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "experience"), "set_experience", "get_experience");
 
-	ClassDB::bind_method(D_METHOD("set_experience_to_next_level", "exp"), &Player::set_experience_to_next_level);
-	ClassDB::bind_method(D_METHOD("get_experience_to_next_level"), &Player::get_experience_to_next_level);
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "experience_to_next_level"), "set_experience_to_next_level", "get_experience_to_next_level");
-
-	ClassDB::bind_method(D_METHOD("add_experience", "amount"), &Player::add_experience);
-	ClassDB::bind_method(D_METHOD("get_experience_percent"), &Player::get_experience_percent);
-	ClassDB::bind_method(D_METHOD("get_experience_needed"), &Player::get_experience_needed);
-
-	// === 货币系统 ===
-	ClassDB::bind_method(D_METHOD("set_gold", "gold"), &Player::set_gold);
-	ClassDB::bind_method(D_METHOD("get_gold"), &Player::get_gold);
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "gold"), "set_gold", "get_gold");
-
-	ClassDB::bind_method(D_METHOD("has_gold", "amount"), &Player::has_gold);
-	ClassDB::bind_method(D_METHOD("add_gold", "amount"), &Player::add_gold);
-	ClassDB::bind_method(D_METHOD("spend_gold", "amount"), &Player::spend_gold);
-
-	// === 玩家标识 ===
-	ClassDB::bind_method(D_METHOD("set_player_id", "id"), &Player::set_player_id);
-	ClassDB::bind_method(D_METHOD("get_player_id"), &Player::get_player_id);
-	ADD_PROPERTY(PropertyInfo(Variant::STRING_NAME, "player_id"), "set_player_id", "get_player_id");
-
-	// === 统计数据 ===
-	ClassDB::bind_method(D_METHOD("set_kills", "kills"), &Player::set_kills);
-	ClassDB::bind_method(D_METHOD("get_kills"), &Player::get_kills);
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "kills"), "set_kills", "get_kills");
-	ClassDB::bind_method(D_METHOD("add_kill"), &Player::add_kill);
-
-	ClassDB::bind_method(D_METHOD("set_deaths", "deaths"), &Player::set_deaths);
-	ClassDB::bind_method(D_METHOD("get_deaths"), &Player::get_deaths);
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "deaths"), "set_deaths", "get_deaths");
-	ClassDB::bind_method(D_METHOD("add_death"), &Player::add_death);
-
-	ClassDB::bind_method(D_METHOD("set_playtime", "time"), &Player::set_playtime);
-	ClassDB::bind_method(D_METHOD("get_playtime"), &Player::get_playtime);
-	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "playtime"), "set_playtime", "get_playtime");
-
-	ClassDB::bind_method(D_METHOD("get_kd_ratio"), &Player::get_kd_ratio);
-
-	// === 虚函数绑定 ===
-	GDVIRTUAL_BIND(_on_experience_gained, "amount");
-	GDVIRTUAL_BIND(_on_gold_changed, "old_amount", "new_amount");
 }
 
 Player::Player() {

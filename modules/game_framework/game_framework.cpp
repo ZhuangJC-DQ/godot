@@ -9,8 +9,8 @@
 #include "scene/3d/mesh_instance_3d.h"
 #include "scene/3d/node_3d.h"
 #include "scene/resources/3d/primitive_meshes.h"
-#include "scene/resources/material.h"
 #include "scene/resources/image_texture.h"
+#include "scene/resources/material.h"
 
 GameFramework::GameFramework() {
 }
@@ -19,18 +19,6 @@ GameFramework::~GameFramework() {
 }
 
 void GameFramework::_bind_methods() {
-	ClassDB::bind_method(D_METHOD("test_map_generation"), &GameFramework::test_map_generation);
-	ClassDB::bind_method(D_METHOD("print_chunk_at", "x", "y"), &GameFramework::print_chunk_at);
-	ClassDB::bind_method(D_METHOD("print_city", "chunk_x", "chunk_y", "city_index"), &GameFramework::print_city);
-	ClassDB::bind_method(D_METHOD("print_monster", "chunk_x", "chunk_y", "monster_index"), &GameFramework::print_monster);
-	ClassDB::bind_method(D_METHOD("print_npc", "chunk_x", "chunk_y", "npc_index"), &GameFramework::print_npc);
-	ClassDB::bind_method(D_METHOD("print_all_entities", "chunk_x", "chunk_y"), &GameFramework::print_all_entities);
-	ClassDB::bind_method(D_METHOD("visualize_chunk", "chunk_x", "chunk_y"), &GameFramework::visualize_chunk);
-	ClassDB::bind_method(D_METHOD("clear_visualization"), &GameFramework::clear_visualization);
-	ClassDB::bind_method(D_METHOD("generate_in_editor"), &GameFramework::generate_in_editor);
-	ClassDB::bind_method(D_METHOD("set_tile_size", "size"), &GameFramework::set_tile_size);
-	ClassDB::bind_method(D_METHOD("get_tile_size"), &GameFramework::get_tile_size);
-
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "tile_size", PROPERTY_HINT_RANGE, "0.1,10.0,0.1"), "set_tile_size", "get_tile_size");
 }
 

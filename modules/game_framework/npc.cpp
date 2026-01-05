@@ -5,76 +5,7 @@
 #include "npc.h"
 
 void NPC::_bind_methods() {
-	// === 枚举绑定 ===
-	// NPCBehavior
-	BIND_ENUM_CONSTANT(NPC_BEHAVIOR_IDLE);
-	BIND_ENUM_CONSTANT(NPC_BEHAVIOR_PATROL);
-	BIND_ENUM_CONSTANT(NPC_BEHAVIOR_WANDER);
-	BIND_ENUM_CONSTANT(NPC_BEHAVIOR_FOLLOW);
-	BIND_ENUM_CONSTANT(NPC_BEHAVIOR_FLEE);
 
-	// NPCType
-	BIND_ENUM_CONSTANT(NPC_TYPE_VILLAGER);
-	BIND_ENUM_CONSTANT(NPC_TYPE_MERCHANT);
-	BIND_ENUM_CONSTANT(NPC_TYPE_QUEST_GIVER);
-	BIND_ENUM_CONSTANT(NPC_TYPE_TRAINER);
-	BIND_ENUM_CONSTANT(NPC_TYPE_GUARD);
-
-	// === NPC 类型 ===
-	ClassDB::bind_method(D_METHOD("set_npc_type", "type"), &NPC::set_npc_type);
-	ClassDB::bind_method(D_METHOD("get_npc_type"), &NPC::get_npc_type);
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "npc_type", PROPERTY_HINT_ENUM, "Villager,Merchant,QuestGiver,Trainer,Guard"), "set_npc_type", "get_npc_type");
-
-	ClassDB::bind_method(D_METHOD("set_behavior", "behavior"), &NPC::set_behavior);
-	ClassDB::bind_method(D_METHOD("get_behavior"), &NPC::get_behavior);
-	ADD_PROPERTY(PropertyInfo(Variant::INT, "behavior", PROPERTY_HINT_ENUM, "Idle,Patrol,Wander,Follow,Flee"), "set_behavior", "get_behavior");
-
-	// === 对话系统 ===
-	ClassDB::bind_method(D_METHOD("set_dialogue_id", "id"), &NPC::set_dialogue_id);
-	ClassDB::bind_method(D_METHOD("get_dialogue_id"), &NPC::get_dialogue_id);
-	ADD_PROPERTY(PropertyInfo(Variant::STRING_NAME, "dialogue_id"), "set_dialogue_id", "get_dialogue_id");
-
-	ClassDB::bind_method(D_METHOD("set_can_talk", "can_talk"), &NPC::set_can_talk);
-	ClassDB::bind_method(D_METHOD("get_can_talk"), &NPC::get_can_talk);
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "can_talk"), "set_can_talk", "get_can_talk");
-
-	ClassDB::bind_method(D_METHOD("talk_to", "player"), &NPC::talk_to);
-
-	// === 商店系统 ===
-	ClassDB::bind_method(D_METHOD("set_is_merchant", "is_merchant"), &NPC::set_is_merchant);
-	ClassDB::bind_method(D_METHOD("get_is_merchant"), &NPC::get_is_merchant);
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "is_merchant"), "set_is_merchant", "get_is_merchant");
-
-	ClassDB::bind_method(D_METHOD("set_shop_id", "id"), &NPC::set_shop_id);
-	ClassDB::bind_method(D_METHOD("get_shop_id"), &NPC::get_shop_id);
-	ADD_PROPERTY(PropertyInfo(Variant::STRING_NAME, "shop_id"), "set_shop_id", "get_shop_id");
-
-	// === AI 参数 ===
-	ClassDB::bind_method(D_METHOD("set_aggro_range", "range"), &NPC::set_aggro_range);
-	ClassDB::bind_method(D_METHOD("get_aggro_range"), &NPC::get_aggro_range);
-	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "aggro_range"), "set_aggro_range", "get_aggro_range");
-
-	ClassDB::bind_method(D_METHOD("set_leash_range", "range"), &NPC::set_leash_range);
-	ClassDB::bind_method(D_METHOD("get_leash_range"), &NPC::get_leash_range);
-	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "leash_range"), "set_leash_range", "get_leash_range");
-
-	ClassDB::bind_method(D_METHOD("set_spawn_position", "position"), &NPC::set_spawn_position);
-	ClassDB::bind_method(D_METHOD("get_spawn_position"), &NPC::get_spawn_position);
-	ADD_PROPERTY(PropertyInfo(Variant::VECTOR2I, "spawn_position"), "set_spawn_position", "get_spawn_position");
-
-	ClassDB::bind_method(D_METHOD("is_aggressive"), &NPC::is_aggressive);
-
-	// === 掉落表 ===
-	ClassDB::bind_method(D_METHOD("set_loot_table_id", "id"), &NPC::set_loot_table_id);
-	ClassDB::bind_method(D_METHOD("get_loot_table_id"), &NPC::get_loot_table_id);
-	ADD_PROPERTY(PropertyInfo(Variant::STRING_NAME, "loot_table_id"), "set_loot_table_id", "get_loot_table_id");
-
-	// === 交互 ===
-	ClassDB::bind_method(D_METHOD("can_interact_with", "actor"), &NPC::can_interact_with);
-
-	// === 虚函数绑定 ===
-	GDVIRTUAL_BIND(_on_talk_to, "player");
-	GDVIRTUAL_BIND(_on_can_interact, "actor");
 }
 
 NPC::NPC() {

@@ -45,6 +45,9 @@ void PlayerHUD::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_exp_color"), &PlayerHUD::get_exp_color);
 
 	// Properties
+	ADD_GROUP("Build Mode", "");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "auto_build_ui", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_DEFAULT, "如果找不到场景节点则自动创建UI"), "set_auto_build_ui", "is_auto_build_ui");
+
 	ADD_GROUP("Display", "show_");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "show_health"), "set_show_health", "is_show_health");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "show_mana"), "set_show_mana", "is_show_mana");
@@ -58,6 +61,16 @@ void PlayerHUD::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "mana_color"), "set_mana_color", "get_mana_color");
 	ADD_PROPERTY(PropertyInfo(Variant::COLOR, "exp_color"), "set_exp_color", "get_exp_color");
 
+	ADD_GROUP("Node Paths", "");
+	ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "health_bar_path"), "set_health_bar_path", "get_health_bar_path");
+	ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "health_label_path"), "set_health_label_path", "get_health_label_path");
+	ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "mana_bar_path"), "set_mana_bar_path", "get_mana_bar_path");
+	ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "mana_label_path"), "set_mana_label_path", "get_mana_label_path");
+	ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "exp_bar_path"), "set_exp_bar_path", "get_exp_bar_path");
+	ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "exp_label_path"), "set_exp_label_path", "get_exp_label_path");
+	ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "gold_label_path"), "set_gold_label_path", "get_gold_label_path");
+	ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "level_label_path"), "set_level_label_path", "get_level_label_path");
+
 	// Signals
 	ADD_SIGNAL(MethodInfo("player_bound", PropertyInfo(Variant::OBJECT, "player")));
 	ADD_SIGNAL(MethodInfo("player_unbound"));
@@ -66,7 +79,7 @@ void PlayerHUD::_bind_methods() {
 void PlayerHUD::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_READY: {
-			_build_ui();
+			_get_ui_nodes();
 		} break;
 
 		case NOTIFICATION_PROCESS: {
@@ -86,7 +99,82 @@ PlayerHUD::~PlayerHUD() {
 	unbind_player();
 }
 
-void PlayerHUD::_build_ui() {
+void PlayerHUD::_get_ui_nodes() {
+	// 通过NodePath获取场景中的UI节点
+	// 使用%唯一名称可以避免完整路径依赖
+
+	// 获取容器节点
+	info_container = Object::cast_to<Control>(get_node_or_null(info_container_path));
+	health_container = Object::cast_to<Control>(get_node_or_null(health_container_path));
+	mana_container = Object::cast_to<Control>(get_node_or_null(mana_container_path));
+	exp_container = Object::cast_to<Control>(get_node_or_null(exp_container_path));
+
+	// 获取进度条节点
+	health_bar = Object::cast_to<ProgressBar>(get_node_or_null(health_bar_path));
+	mana_bar = Object::cast_to<ProgressBar>(get_node_or_null(mana_bar_path));
+	exp_bar = Object::cast_to<ProgressBar>(get_node_or_null(exp_bar_path));
+
+	// 获取标签节点
+	health_label = Object::cast_to<Label>(get_node_or_null(health_label_path));
+	mana_label = Object::cast_to<Label>(get_node_or_null(mana_label_path));
+	exp_label = Object::cast_to<Label>(get_node_or_null(exp_label_path));
+	gold_label = Object::cast_to<Label>(get_node_or_null(gold_label_path));
+	level_label = Object::cast_to<Label>(get_node_or_null(level_label_path));
+
+	// 检查必需的节点是否存在
+	if (!health_bar || !mana_bar || !exp_bar) {
+		if (auto_build_ui) {
+			// 如果找不到场景节点，自动创建UI（向后兼容）
+			print_line("PlayerHUD: 未找到场景节点，使用代码自动构建UI");
+			_build_ui_fallback();
+			return;
+		} else {
+			// 不自动构建，只报错
+			if (!health_bar) {
+				ERR_PRINT(vformat("PlayerHUD: 无法找到HealthBar节点，路径: %s", health_bar_path));
+			}
+			if (!mana_bar) {
+				ERR_PRINT(vformat("PlayerHUD: 无法找到ManaBar节点，路径: %s", mana_bar_path));
+			}
+			if (!exp_bar) {
+				ERR_PRINT(vformat("PlayerHUD: 无法找到ExpBar节点，路径: %s", exp_bar_path));
+			}
+		}
+	}
+
+	// 应用显示设置
+	if (health_container) {
+		health_container->set_visible(show_health);
+	}
+	if (mana_container) {
+		mana_container->set_visible(show_mana);
+	}
+	if (exp_container) {
+		exp_container->set_visible(show_exp);
+	}
+	if (gold_label && gold_label->get_parent()) {
+		if (Control *gold_parent = Object::cast_to<Control>(gold_label->get_parent())) {
+			gold_parent->set_visible(show_gold);
+		}
+	}
+	if (level_label) {
+		level_label->set_visible(show_level);
+	}
+	if (health_label) {
+		health_label->set_visible(show_numeric_values);
+	}
+	if (mana_label) {
+		mana_label->set_visible(show_numeric_values);
+	}
+	if (exp_label) {
+		exp_label->set_visible(show_numeric_values);
+	}
+}
+
+void PlayerHUD::_build_ui_fallback() {
+	// 代码自动构建UI（向后兼容模式）
+	// 当找不到场景节点时自动创建
+
 	// Main container - top left layout
 	VBoxContainer *main_vbox = memnew(VBoxContainer);
 	main_vbox->set_anchors_preset(PRESET_TOP_LEFT);
@@ -113,7 +201,7 @@ void PlayerHUD::_build_ui() {
 	info_container->add_child(gold_box);
 
 	Label *gold_icon = memnew(Label);
-	gold_icon->set_text("G");  // Gold icon
+	gold_icon->set_text("G");
 	gold_icon->add_theme_color_override("font_color", Color(1.0, 0.85, 0.2, 1.0));
 	gold_box->add_child(gold_icon);
 

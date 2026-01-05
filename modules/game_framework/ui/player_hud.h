@@ -26,22 +26,36 @@ private:
 	// 绑定的玩家
 	Player *bound_player = nullptr;
 
-	// UI组件 - 血量
+	// === NodePath配置（可在编辑器中设置） ===
+	NodePath health_container_path = NodePath("%HealthContainer");
+	NodePath health_bar_path = NodePath("%HealthBar");
+	NodePath health_label_path = NodePath("%HealthLabel");
+
+	NodePath mana_container_path = NodePath("%ManaContainer");
+	NodePath mana_bar_path = NodePath("%ManaBar");
+	NodePath mana_label_path = NodePath("%ManaLabel");
+
+	NodePath exp_container_path = NodePath("%ExpContainer");
+	NodePath exp_bar_path = NodePath("%ExpBar");
+	NodePath exp_label_path = NodePath("%ExpLabel");
+
+	NodePath info_container_path = NodePath("%InfoContainer");
+	NodePath gold_label_path = NodePath("%GoldLabel");
+	NodePath level_label_path = NodePath("%LevelLabel");
+
+	// === UI组件缓存（运行时获取） ===
 	Control *health_container = nullptr;
 	ProgressBar *health_bar = nullptr;
 	Label *health_label = nullptr;
 
-	// UI组件 - 法力
 	Control *mana_container = nullptr;
 	ProgressBar *mana_bar = nullptr;
 	Label *mana_label = nullptr;
 
-	// UI组件 - 经验
 	Control *exp_container = nullptr;
 	ProgressBar *exp_bar = nullptr;
 	Label *exp_label = nullptr;
 
-	// UI组件 - 金币和等级
 	Control *info_container = nullptr;
 	Label *gold_label = nullptr;
 	Label *level_label = nullptr;
@@ -59,8 +73,12 @@ private:
 	Color mana_color = Color(0.2, 0.4, 0.9, 1.0);
 	Color exp_color = Color(0.3, 0.8, 0.3, 1.0);
 
+	// 配置
+	bool auto_build_ui = true; // 如果找不到场景节点，自动创建UI
+
 	// 内部方法
-	void _build_ui();
+	void _get_ui_nodes(); // 从场景中获取UI节点引用
+	void _build_ui_fallback(); // 如果找不到场景节点，用代码创建UI（向后兼容）
 	void _update_health();
 	void _update_mana();
 	void _update_exp();
@@ -110,6 +128,10 @@ public:
 	void set_show_numeric_values(bool p_show);
 	bool is_show_numeric_values() const { return show_numeric_values; }
 
+	// === 构建模式 ===
+	void set_auto_build_ui(bool p_auto) { auto_build_ui = p_auto; }
+	bool is_auto_build_ui() const { return auto_build_ui; }
+
 	// === 样式 ===
 	void set_health_color(const Color &p_color);
 	Color get_health_color() const { return health_color; }
@@ -119,6 +141,31 @@ public:
 
 	void set_exp_color(const Color &p_color);
 	Color get_exp_color() const { return exp_color; }
+
+	// === NodePath访问器（可选，用于编辑器配置） ===
+	void set_health_bar_path(const NodePath &p_path) { health_bar_path = p_path; }
+	NodePath get_health_bar_path() const { return health_bar_path; }
+
+	void set_health_label_path(const NodePath &p_path) { health_label_path = p_path; }
+	NodePath get_health_label_path() const { return health_label_path; }
+
+	void set_mana_bar_path(const NodePath &p_path) { mana_bar_path = p_path; }
+	NodePath get_mana_bar_path() const { return mana_bar_path; }
+
+	void set_mana_label_path(const NodePath &p_path) { mana_label_path = p_path; }
+	NodePath get_mana_label_path() const { return mana_label_path; }
+
+	void set_exp_bar_path(const NodePath &p_path) { exp_bar_path = p_path; }
+	NodePath get_exp_bar_path() const { return exp_bar_path; }
+
+	void set_exp_label_path(const NodePath &p_path) { exp_label_path = p_path; }
+	NodePath get_exp_label_path() const { return exp_label_path; }
+
+	void set_gold_label_path(const NodePath &p_path) { gold_label_path = p_path; }
+	NodePath get_gold_label_path() const { return gold_label_path; }
+
+	void set_level_label_path(const NodePath &p_path) { level_label_path = p_path; }
+	NodePath get_level_label_path() const { return level_label_path; }
 };
 
 VARIANT_ENUM_CAST(PlayerHUD::BarStyle);

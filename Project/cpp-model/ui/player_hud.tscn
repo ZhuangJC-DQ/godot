@@ -1,19 +1,11 @@
-[gd_scene load_steps=2 format=3 uid="uid://bpq5xrm1234ab"]
+[gd_scene format=3 uid="uid://bpq5xrm1234ab"]
 
-[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_health"]
-bg_color = Color(0.8, 0.2, 0.2, 1)
-corner_radius_top_left = 4
-corner_radius_top_right = 4
-corner_radius_bottom_right = 4
-corner_radius_bottom_left = 4
-
-[node name="PlayerHUD" type="Control"]
+[node name="PlayerHUD" type="PlayerHUD" unique_id=549949664]
 layout_mode = 3
 anchors_preset = 0
 mouse_filter = 2
-script = null
 
-[node name="MainVBox" type="VBoxContainer" parent="."]
+[node name="MainVBox" type="VBoxContainer" parent="." unique_id=1584927685]
 layout_mode = 0
 offset_left = 20.0
 offset_top = 20.0
@@ -21,100 +13,97 @@ offset_right = 240.0
 offset_bottom = 120.0
 theme_override_constants/separation = 8
 
-[node name="InfoContainer" type="HBoxContainer" parent="MainVBox"]
+[node name="InfoContainer" type="HBoxContainer" parent="MainVBox" unique_id=389830073]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 20
 
-[node name="LevelLabel" type="Label" parent="MainVBox/InfoContainer"]
+[node name="LevelLabel" type="Label" parent="MainVBox/InfoContainer" unique_id=540296989]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.85, 0.4, 1)
 theme_override_font_sizes/font_size = 20
 text = "Lv. 1"
 
-[node name="GoldBox" type="HBoxContainer" parent="MainVBox/InfoContainer"]
+[node name="GoldBox" type="HBoxContainer" parent="MainVBox/InfoContainer" unique_id=1310089537]
 layout_mode = 2
 theme_override_constants/separation = 4
 
-[node name="GoldIcon" type="Label" parent="MainVBox/InfoContainer/GoldBox"]
+[node name="GoldIcon" type="Label" parent="MainVBox/InfoContainer/GoldBox" unique_id=1955345802]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
 text = "G"
 
-[node name="GoldLabel" type="Label" parent="MainVBox/InfoContainer/GoldBox"]
+[node name="GoldLabel" type="Label" parent="MainVBox/InfoContainer/GoldBox" unique_id=1138722264]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.85, 0.2, 1)
 theme_override_font_sizes/font_size = 18
 text = "0"
 
-[node name="HealthContainer" type="HBoxContainer" parent="MainVBox"]
+[node name="HealthContainer" type="HBoxContainer" parent="MainVBox" unique_id=1992141181]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="HealthIcon" type="Label" parent="MainVBox/HealthContainer"]
+[node name="HealthIcon" type="Label" parent="MainVBox/HealthContainer" unique_id=140155998]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.8, 0.2, 0.2, 1)
 text = "HP"
 
-[node name="HealthBar" type="ProgressBar" parent="MainVBox/HealthContainer"]
+[node name="HealthBar" type="ProgressBar" parent="MainVBox/HealthContainer" unique_id=237815040]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(200, 20)
 layout_mode = 2
-max_value = 100.0
 value = 100.0
 show_percentage = false
 
-[node name="HealthLabel" type="Label" parent="MainVBox/HealthContainer"]
+[node name="HealthLabel" type="Label" parent="MainVBox/HealthContainer" unique_id=535720297]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
 text = "100/100"
 
-[node name="ManaContainer" type="HBoxContainer" parent="MainVBox"]
+[node name="ManaContainer" type="HBoxContainer" parent="MainVBox" unique_id=1945665664]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="ManaIcon" type="Label" parent="MainVBox/ManaContainer"]
+[node name="ManaIcon" type="Label" parent="MainVBox/ManaContainer" unique_id=1511511849]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.2, 0.4, 0.9, 1)
 text = "MP"
 
-[node name="ManaBar" type="ProgressBar" parent="MainVBox/ManaContainer"]
+[node name="ManaBar" type="ProgressBar" parent="MainVBox/ManaContainer" unique_id=522241448]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(200, 16)
 layout_mode = 2
-max_value = 100.0
 value = 100.0
 show_percentage = false
 
-[node name="ManaLabel" type="Label" parent="MainVBox/ManaContainer"]
+[node name="ManaLabel" type="Label" parent="MainVBox/ManaContainer" unique_id=1339156056]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 14
 text = "100/100"
 
-[node name="ExpContainer" type="HBoxContainer" parent="MainVBox"]
+[node name="ExpContainer" type="HBoxContainer" parent="MainVBox" unique_id=2081773083]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="ExpIcon" type="Label" parent="MainVBox/ExpContainer"]
+[node name="ExpIcon" type="Label" parent="MainVBox/ExpContainer" unique_id=1188557591]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.3, 0.8, 0.3, 1)
 text = "EXP"
 
-[node name="ExpBar" type="ProgressBar" parent="MainVBox/ExpContainer"]
+[node name="ExpBar" type="ProgressBar" parent="MainVBox/ExpContainer" unique_id=1435843351]
 unique_name_in_owner = true
 custom_minimum_size = Vector2(200, 12)
 layout_mode = 2
-max_value = 100.0
 show_percentage = false
 
-[node name="ExpLabel" type="Label" parent="MainVBox/ExpContainer"]
+[node name="ExpLabel" type="Label" parent="MainVBox/ExpContainer" unique_id=1947636116]
 unique_name_in_owner = true
 layout_mode = 2
 theme_override_font_sizes/font_size = 12

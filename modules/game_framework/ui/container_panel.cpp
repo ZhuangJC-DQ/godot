@@ -39,6 +39,10 @@ void ContainerPanel::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "slot_separation"), "set_slot_separation", "get_slot_separation");
 	ADD_PROPERTY(PropertyInfo(Variant::STRING, "title"), "set_title", "get_title");
 
+	ADD_GROUP("Node Paths", "");
+	ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "title_label_path"), "set_title_label_path", "get_title_label_path");
+	ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "slot_grid_path"), "set_slot_grid_path", "get_slot_grid_path");
+
 	// 信号
 	ADD_SIGNAL(MethodInfo("container_bound", PropertyInfo(Variant::OBJECT, "object")));
 	ADD_SIGNAL(MethodInfo("container_unbound"));
@@ -56,31 +60,7 @@ void ContainerPanel::_bind_methods() {
 void ContainerPanel::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_READY: {
-			// 构建UI结构
-			VBoxContainer *vbox = memnew(VBoxContainer);
-			add_child(vbox);
-
-			// 标题
-			title_label = memnew(Label);
-			title_label->set_horizontal_alignment(HORIZONTAL_ALIGNMENT_CENTER);
-			title_label->set_text("Container");
-			vbox->add_child(title_label);
-
-			// 边距容器
-			MarginContainer *margin = memnew(MarginContainer);
-			margin->add_theme_constant_override("margin_left", 8);
-			margin->add_theme_constant_override("margin_right", 8);
-			margin->add_theme_constant_override("margin_top", 8);
-			margin->add_theme_constant_override("margin_bottom", 8);
-			vbox->add_child(margin);
-
-			// 网格容器
-			slot_grid = memnew(GridContainer);
-			slot_grid->set_columns(columns);
-			slot_grid->add_theme_constant_override("h_separation", slot_separation);
-			slot_grid->add_theme_constant_override("v_separation", slot_separation);
-			margin->add_child(slot_grid);
-
+			_get_ui_nodes();
 		} break;
 	}
 }
@@ -90,6 +70,25 @@ ContainerPanel::ContainerPanel() {
 
 ContainerPanel::~ContainerPanel() {
 	unbind_container();
+}
+
+void ContainerPanel::_get_ui_nodes() {
+	// 通过NodePath获取场景中的UI节点
+	title_label = Object::cast_to<Label>(get_node_or_null(title_label_path));
+	slot_grid = Object::cast_to<GridContainer>(get_node_or_null(slot_grid_path));
+
+	// 检查必需节点
+	if (!title_label) {
+		ERR_PRINT(vformat("ContainerPanel: 无法找到TitleLabel节点，路径: %s。请从场景文件实例化ContainerPanel。", title_label_path));
+	}
+	if (!slot_grid) {
+		ERR_PRINT(vformat("ContainerPanel: 无法找到SlotGrid节点，路径: %s。请从场景文件实例化ContainerPanel。", slot_grid_path));
+	} else {
+		// 应用配置
+		slot_grid->set_columns(columns);
+		slot_grid->add_theme_constant_override("h_separation", slot_separation);
+		slot_grid->add_theme_constant_override("v_separation", slot_separation);
+	}
 }
 
 void ContainerPanel::bind_container(WorldObject *p_object) {

@@ -8,6 +8,8 @@
 #include "ui/player_hud.h"
 
 #include "core/config/engine.h"
+#include "core/io/resource_loader.h"
+#include "scene/resources/packed_scene.h"
 #include "core/input/input.h"
 #include "core/input/input_event.h"
 #include "scene/main/canvas_layer.h"
@@ -284,28 +286,42 @@ void PlayerController3D::_setup_hud() {
 	ui_layer->set_layer(10);  // 确保在最上层
 	add_child(ui_layer);
 
-	// 创建PlayerHUD
-	player_hud = memnew(PlayerHUD);
-	player_hud->set_name("PlayerHUD");
-	ui_layer->add_child(player_hud);
+	// 从场景文件加载PlayerHUD
+	Ref<PackedScene> hud_scene = ResourceLoader::load("res://ui/player_hud.tscn");
+	if (hud_scene.is_valid()) {
+		player_hud = Object::cast_to<PlayerHUD>(hud_scene->instantiate());
+		if (player_hud) {
+			player_hud->set_name("PlayerHUD");
+			ui_layer->add_child(player_hud);
 
-	// 绑定Player数据到HUD
-	if (player_data.is_valid()) {
-		player_hud->bind_player(player_data.ptr());
+			// 绑定Player数据到HUD
+			if (player_data.is_valid()) {
+				player_hud->bind_player(player_data.ptr());
+			}
+		}
+	} else {
+		ERR_PRINT("PlayerController3D: 无法加载PlayerHUD场景文件: res://ui/player_hud.tscn");
 	}
 
-	// 创建背包面板（默认隐藏）
-	inventory_panel = memnew(ContainerPanel);
-	inventory_panel->set_name("InventoryPanel");
-	inventory_panel->set_title("Inventory");
-	inventory_panel->set_columns(5);
-	inventory_panel->set_anchors_preset(Control::PRESET_CENTER);
-	inventory_panel->hide();
-	ui_layer->add_child(inventory_panel);
+	// 从场景文件加载背包面板（默认隐藏）
+	Ref<PackedScene> inventory_scene = ResourceLoader::load("res://ui/container_panel.tscn");
+	if (inventory_scene.is_valid()) {
+		inventory_panel = Object::cast_to<ContainerPanel>(inventory_scene->instantiate());
+		if (inventory_panel) {
+			inventory_panel->set_name("InventoryPanel");
+			inventory_panel->set_title("Inventory");
+			inventory_panel->set_columns(5);
+			inventory_panel->set_anchors_preset(Control::PRESET_CENTER);
+			inventory_panel->hide();
+			ui_layer->add_child(inventory_panel);
 
-	// 绑定Player的容器到背包面板
-	if (player_data.is_valid()) {
-		inventory_panel->bind_container(player_data.ptr());
+			// 绑定Player的容器到背包面板
+			if (player_data.is_valid()) {
+				inventory_panel->bind_container(player_data.ptr());
+			}
+		}
+	} else {
+		ERR_PRINT("PlayerController3D: 无法加载ContainerPanel场景文件: res://ui/container_panel.tscn");
 	}
 }
 

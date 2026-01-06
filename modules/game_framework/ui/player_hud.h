@@ -73,12 +73,8 @@ private:
 	Color mana_color = Color(0.2, 0.4, 0.9, 1.0);
 	Color exp_color = Color(0.3, 0.8, 0.3, 1.0);
 
-	// 配置
-	bool auto_build_ui = true; // 如果找不到场景节点，自动创建UI
-
 	// 内部方法
 	void _get_ui_nodes(); // 从场景中获取UI节点引用
-	void _build_ui_fallback(); // 如果找不到场景节点，用代码创建UI（向后兼容）
 	void _update_health();
 	void _update_mana();
 	void _update_exp();
@@ -127,10 +123,6 @@ public:
 
 	void set_show_numeric_values(bool p_show);
 	bool is_show_numeric_values() const { return show_numeric_values; }
-
-	// === 构建模式 ===
-	void set_auto_build_ui(bool p_auto) { auto_build_ui = p_auto; }
-	bool is_auto_build_ui() const { return auto_build_ui; }
 
 	// === 样式 ===
 	void set_health_color(const Color &p_color);

@@ -45,9 +45,6 @@ void PlayerHUD::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_exp_color"), &PlayerHUD::get_exp_color);
 
 	// Properties
-	ADD_GROUP("Build Mode", "");
-	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "auto_build_ui", PROPERTY_HINT_NONE, "", PROPERTY_USAGE_DEFAULT, "如果找不到场景节点则自动创建UI"), "set_auto_build_ui", "is_auto_build_ui");
-
 	ADD_GROUP("Display", "show_");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "show_health"), "set_show_health", "is_show_health");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "show_mana"), "set_show_mana", "is_show_mana");
@@ -122,24 +119,14 @@ void PlayerHUD::_get_ui_nodes() {
 	level_label = Object::cast_to<Label>(get_node_or_null(level_label_path));
 
 	// 检查必需的节点是否存在
-	if (!health_bar || !mana_bar || !exp_bar) {
-		if (auto_build_ui) {
-			// 如果找不到场景节点，自动创建UI（向后兼容）
-			print_line("PlayerHUD: 未找到场景节点，使用代码自动构建UI");
-			_build_ui_fallback();
-			return;
-		} else {
-			// 不自动构建，只报错
-			if (!health_bar) {
-				ERR_PRINT(vformat("PlayerHUD: 无法找到HealthBar节点，路径: %s", health_bar_path));
-			}
-			if (!mana_bar) {
-				ERR_PRINT(vformat("PlayerHUD: 无法找到ManaBar节点，路径: %s", mana_bar_path));
-			}
-			if (!exp_bar) {
-				ERR_PRINT(vformat("PlayerHUD: 无法找到ExpBar节点，路径: %s", exp_bar_path));
-			}
-		}
+	if (!health_bar) {
+		ERR_PRINT(vformat("PlayerHUD: 无法找到HealthBar节点，路径: %s。请从场景文件实例化PlayerHUD。", health_bar_path));
+	}
+	if (!mana_bar) {
+		ERR_PRINT(vformat("PlayerHUD: 无法找到ManaBar节点，路径: %s。请从场景文件实例化PlayerHUD。", mana_bar_path));
+	}
+	if (!exp_bar) {
+		ERR_PRINT(vformat("PlayerHUD: 无法找到ExpBar节点，路径: %s。请从场景文件实例化PlayerHUD。", exp_bar_path));
 	}
 
 	// 应用显示设置
@@ -169,162 +156,6 @@ void PlayerHUD::_get_ui_nodes() {
 	if (exp_label) {
 		exp_label->set_visible(show_numeric_values);
 	}
-}
-
-void PlayerHUD::_build_ui_fallback() {
-	// 代码自动构建UI（向后兼容模式）
-	// 当找不到场景节点时自动创建
-
-	// Main container - top left layout
-	VBoxContainer *main_vbox = memnew(VBoxContainer);
-	main_vbox->set_anchors_preset(PRESET_TOP_LEFT);
-	main_vbox->set_offset(SIDE_LEFT, 20);
-	main_vbox->set_offset(SIDE_TOP, 20);
-	main_vbox->add_theme_constant_override("separation", 8);
-	add_child(main_vbox);
-
-	// === Level and Gold info row ===
-	info_container = memnew(HBoxContainer);
-	Object::cast_to<HBoxContainer>(info_container)->add_theme_constant_override("separation", 20);
-	main_vbox->add_child(info_container);
-
-	// Level label
-	level_label = memnew(Label);
-	level_label->set_text("Lv. 1");
-	level_label->add_theme_font_size_override("font_size", 20);
-	level_label->add_theme_color_override("font_color", Color(1.0, 0.85, 0.4, 1.0));
-	info_container->add_child(level_label);
-
-	// Gold label
-	HBoxContainer *gold_box = memnew(HBoxContainer);
-	gold_box->add_theme_constant_override("separation", 4);
-	info_container->add_child(gold_box);
-
-	Label *gold_icon = memnew(Label);
-	gold_icon->set_text("G");
-	gold_icon->add_theme_color_override("font_color", Color(1.0, 0.85, 0.2, 1.0));
-	gold_box->add_child(gold_icon);
-
-	gold_label = memnew(Label);
-	gold_label->set_text("0");
-	gold_label->add_theme_font_size_override("font_size", 18);
-	gold_label->add_theme_color_override("font_color", Color(1.0, 0.85, 0.2, 1.0));
-	gold_box->add_child(gold_label);
-
-	// === Health bar ===
-	health_container = memnew(HBoxContainer);
-	Object::cast_to<HBoxContainer>(health_container)->add_theme_constant_override("separation", 8);
-	main_vbox->add_child(health_container);
-
-	Label *health_icon = memnew(Label);
-	health_icon->set_text("HP");
-	health_icon->add_theme_color_override("font_color", health_color);
-	health_container->add_child(health_icon);
-
-	health_bar = memnew(ProgressBar);
-	health_bar->set_custom_minimum_size(Size2(200, 20));
-	health_bar->set_max(100);
-	health_bar->set_value(100);
-	health_bar->set_show_percentage(false);
-	health_bar->add_theme_color_override("font_color", Color(1, 1, 1, 1));
-
-	Ref<StyleBoxFlat> health_fill;
-	health_fill.instantiate();
-	health_fill->set_bg_color(health_color);
-	health_fill->set_corner_radius_all(4);
-	health_bar->add_theme_style_override("fill", health_fill);
-
-	Ref<StyleBoxFlat> health_bg;
-	health_bg.instantiate();
-	health_bg->set_bg_color(Color(0.15, 0.15, 0.15, 0.9));
-	health_bg->set_corner_radius_all(4);
-	health_bar->add_theme_style_override("background", health_bg);
-	health_container->add_child(health_bar);
-
-	health_label = memnew(Label);
-	health_label->set_text("100/100");
-	health_label->add_theme_font_size_override("font_size", 14);
-	health_container->add_child(health_label);
-
-	// === Mana bar ===
-	mana_container = memnew(HBoxContainer);
-	Object::cast_to<HBoxContainer>(mana_container)->add_theme_constant_override("separation", 8);
-	main_vbox->add_child(mana_container);
-
-	Label *mana_icon = memnew(Label);
-	mana_icon->set_text("MP");
-	mana_icon->add_theme_color_override("font_color", mana_color);
-	mana_container->add_child(mana_icon);
-
-	mana_bar = memnew(ProgressBar);
-	mana_bar->set_custom_minimum_size(Size2(200, 16));
-	mana_bar->set_max(100);
-	mana_bar->set_value(100);
-	mana_bar->set_show_percentage(false);
-
-	Ref<StyleBoxFlat> mana_fill;
-	mana_fill.instantiate();
-	mana_fill->set_bg_color(mana_color);
-	mana_fill->set_corner_radius_all(4);
-	mana_bar->add_theme_style_override("fill", mana_fill);
-
-	Ref<StyleBoxFlat> mana_bg;
-	mana_bg.instantiate();
-	mana_bg->set_bg_color(Color(0.15, 0.15, 0.15, 0.9));
-	mana_bg->set_corner_radius_all(4);
-	mana_bar->add_theme_style_override("background", mana_bg);
-	mana_container->add_child(mana_bar);
-
-	mana_label = memnew(Label);
-	mana_label->set_text("100/100");
-	mana_label->add_theme_font_size_override("font_size", 14);
-	mana_container->add_child(mana_label);
-
-	// === Exp bar ===
-	exp_container = memnew(HBoxContainer);
-	Object::cast_to<HBoxContainer>(exp_container)->add_theme_constant_override("separation", 8);
-	main_vbox->add_child(exp_container);
-
-	Label *exp_icon = memnew(Label);
-	exp_icon->set_text("EXP");
-	exp_icon->add_theme_color_override("font_color", exp_color);
-	exp_container->add_child(exp_icon);
-
-	exp_bar = memnew(ProgressBar);
-	exp_bar->set_custom_minimum_size(Size2(200, 12));
-	exp_bar->set_max(100);
-	exp_bar->set_value(0);
-	exp_bar->set_show_percentage(false);
-
-	Ref<StyleBoxFlat> exp_fill;
-	exp_fill.instantiate();
-	exp_fill->set_bg_color(exp_color);
-	exp_fill->set_corner_radius_all(4);
-	exp_bar->add_theme_style_override("fill", exp_fill);
-
-	Ref<StyleBoxFlat> exp_bg;
-	exp_bg.instantiate();
-	exp_bg->set_bg_color(Color(0.15, 0.15, 0.15, 0.9));
-	exp_bg->set_corner_radius_all(4);
-	exp_bar->add_theme_style_override("background", exp_bg);
-	exp_container->add_child(exp_bar);
-
-	exp_label = memnew(Label);
-	exp_label->set_text("0/100");
-	exp_label->add_theme_font_size_override("font_size", 12);
-	exp_container->add_child(exp_label);
-
-	// Apply display settings
-	health_container->set_visible(show_health);
-	mana_container->set_visible(show_mana);
-	exp_container->set_visible(show_exp);
-	if (Control *gold_parent = Object::cast_to<Control>(gold_label->get_parent())) {
-		gold_parent->set_visible(show_gold);
-	}
-	level_label->set_visible(show_level);
-	health_label->set_visible(show_numeric_values);
-	mana_label->set_visible(show_numeric_values);
-	exp_label->set_visible(show_numeric_values);
 }
 
 void PlayerHUD::bind_player(Player *p_player) {

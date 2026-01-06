@@ -1,0 +1,42 @@
+[gd_scene format=3 uid="uid://c8k3jq9m2n5pq"]
+
+[node name="ContainerPanel" type="ContainerPanel" unique_id="123456789"]
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -200.0
+offset_top = -200.0
+offset_right = 200.0
+offset_bottom = 200.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 2
+offset_left = 4.0
+offset_top = 4.0
+offset_right = 396.0
+offset_bottom = 396.0
+
+[node name="TitleLabel" type="Label" parent="VBoxContainer" unique_id="987654321"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Container"
+horizontal_alignment = 1
+
+[node name="MarginContainer" type="MarginContainer" parent="VBoxContainer"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="SlotGrid" type="GridContainer" parent="VBoxContainer/MarginContainer" unique_id="456789123"]
+unique_name_in_owner = true
+layout_mode = 2
+columns = 5
+theme_override_constants/h_separation = 4
+theme_override_constants/v_separation = 4

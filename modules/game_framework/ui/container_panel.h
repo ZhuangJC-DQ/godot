@@ -2,6 +2,40 @@
 /*  container_panel.h                                                     */
 /**************************************************************************/
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+/**************************************************************************/
+/*  container_panel.h                                                     */
+/**************************************************************************/
+
 #pragma once
 
 #include "scene/gui/panel_container.h"
@@ -21,7 +55,11 @@ private:
 	// 绑定的容器对象
 	WorldObject *bound_object = nullptr;
 
-	// UI组件
+	// NodePath配置
+	NodePath title_label_path = NodePath("%TitleLabel");
+	NodePath slot_grid_path = NodePath("%SlotGrid");
+
+	// UI组件缓存
 	Label *title_label = nullptr;
 	GridContainer *slot_grid = nullptr;
 	Vector<ItemSlot *> slots;
@@ -32,6 +70,7 @@ private:
 	int32_t slot_separation = 4;
 
 	// 内部方法
+	void _get_ui_nodes();
 	void _rebuild_slots();
 	void _sync_from_container();
 	void _on_slot_clicked(int button_index, int slot_index);
@@ -70,4 +109,11 @@ public:
 	// === 槽位访问 ===
 	ItemSlot *get_slot(int32_t p_index) const;
 	int32_t get_slot_count() const { return slots.size(); }
+
+	// === NodePath访问器 ===
+	void set_title_label_path(const NodePath &p_path) { title_label_path = p_path; }
+	NodePath get_title_label_path() const { return title_label_path; }
+
+	void set_slot_grid_path(const NodePath &p_path) { slot_grid_path = p_path; }
+	NodePath get_slot_grid_path() const { return slot_grid_path; }
 };

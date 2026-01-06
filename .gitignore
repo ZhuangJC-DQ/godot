@@ -398,3 +398,4 @@ $RECYCLE.BIN/
 *.generated.props
 
 agentmd/
+Project/cpp-model/.godot/

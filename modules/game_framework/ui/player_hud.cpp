@@ -68,6 +68,31 @@ void PlayerHUD::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "gold_label_path"), "set_gold_label_path", "get_gold_label_path");
 	ADD_PROPERTY(PropertyInfo(Variant::NODE_PATH, "level_label_path"), "set_level_label_path", "get_level_label_path");
 
+	// NodePath accessors
+	ClassDB::bind_method(D_METHOD("set_health_bar_path", "path"), &PlayerHUD::set_health_bar_path);
+	ClassDB::bind_method(D_METHOD("get_health_bar_path"), &PlayerHUD::get_health_bar_path);
+
+	ClassDB::bind_method(D_METHOD("set_health_label_path", "path"), &PlayerHUD::set_health_label_path);
+	ClassDB::bind_method(D_METHOD("get_health_label_path"), &PlayerHUD::get_health_label_path);
+
+	ClassDB::bind_method(D_METHOD("set_mana_bar_path", "path"), &PlayerHUD::set_mana_bar_path);
+	ClassDB::bind_method(D_METHOD("get_mana_bar_path"), &PlayerHUD::get_mana_bar_path);
+
+	ClassDB::bind_method(D_METHOD("set_mana_label_path", "path"), &PlayerHUD::set_mana_label_path);
+	ClassDB::bind_method(D_METHOD("get_mana_label_path"), &PlayerHUD::get_mana_label_path);
+
+	ClassDB::bind_method(D_METHOD("set_exp_bar_path", "path"), &PlayerHUD::set_exp_bar_path);
+	ClassDB::bind_method(D_METHOD("get_exp_bar_path"), &PlayerHUD::get_exp_bar_path);
+
+	ClassDB::bind_method(D_METHOD("set_exp_label_path", "path"), &PlayerHUD::set_exp_label_path);
+	ClassDB::bind_method(D_METHOD("get_exp_label_path"), &PlayerHUD::get_exp_label_path);
+
+	ClassDB::bind_method(D_METHOD("set_gold_label_path", "path"), &PlayerHUD::set_gold_label_path);
+	ClassDB::bind_method(D_METHOD("get_gold_label_path"), &PlayerHUD::get_gold_label_path);
+
+	ClassDB::bind_method(D_METHOD("set_level_label_path", "path"), &PlayerHUD::set_level_label_path);
+	ClassDB::bind_method(D_METHOD("get_level_label_path"), &PlayerHUD::get_level_label_path);
+
 	// Signals
 	ADD_SIGNAL(MethodInfo("player_bound", PropertyInfo(Variant::OBJECT, "player")));
 	ADD_SIGNAL(MethodInfo("player_unbound"));

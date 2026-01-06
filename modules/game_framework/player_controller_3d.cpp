@@ -19,6 +19,41 @@
 #include "scene/resources/material.h"
 
 void PlayerController3D::_bind_methods() {
+	// Bind methods for properties
+	ClassDB::bind_method(D_METHOD("set_player_data", "player"), &PlayerController3D::set_player_data);
+	ClassDB::bind_method(D_METHOD("get_player_data"), &PlayerController3D::get_player_data);
+
+	ClassDB::bind_method(D_METHOD("set_camera_distance", "distance"), &PlayerController3D::set_camera_distance);
+	ClassDB::bind_method(D_METHOD("get_camera_distance"), &PlayerController3D::get_camera_distance);
+
+	ClassDB::bind_method(D_METHOD("set_camera_distance_min", "min"), &PlayerController3D::set_camera_distance_min);
+	ClassDB::bind_method(D_METHOD("get_camera_distance_min"), &PlayerController3D::get_camera_distance_min);
+
+	ClassDB::bind_method(D_METHOD("set_camera_distance_max", "max"), &PlayerController3D::set_camera_distance_max);
+	ClassDB::bind_method(D_METHOD("get_camera_distance_max"), &PlayerController3D::get_camera_distance_max);
+
+	ClassDB::bind_method(D_METHOD("set_camera_zoom_speed", "speed"), &PlayerController3D::set_camera_zoom_speed);
+	ClassDB::bind_method(D_METHOD("get_camera_zoom_speed"), &PlayerController3D::get_camera_zoom_speed);
+
+	ClassDB::bind_method(D_METHOD("set_camera_pitch", "pitch"), &PlayerController3D::set_camera_pitch);
+	ClassDB::bind_method(D_METHOD("get_camera_pitch"), &PlayerController3D::get_camera_pitch);
+
+	ClassDB::bind_method(D_METHOD("set_camera_yaw", "yaw"), &PlayerController3D::set_camera_yaw);
+	ClassDB::bind_method(D_METHOD("get_camera_yaw"), &PlayerController3D::get_camera_yaw);
+
+	ClassDB::bind_method(D_METHOD("set_camera_rotation_speed", "speed"), &PlayerController3D::set_camera_rotation_speed);
+	ClassDB::bind_method(D_METHOD("get_camera_rotation_speed"), &PlayerController3D::get_camera_rotation_speed);
+
+	ClassDB::bind_method(D_METHOD("set_move_speed", "speed"), &PlayerController3D::set_move_speed);
+	ClassDB::bind_method(D_METHOD("get_move_speed"), &PlayerController3D::get_move_speed);
+
+	ClassDB::bind_method(D_METHOD("set_rotation_speed", "speed"), &PlayerController3D::set_rotation_speed);
+	ClassDB::bind_method(D_METHOD("get_rotation_speed"), &PlayerController3D::get_rotation_speed);
+
+	ClassDB::bind_method(D_METHOD("set_enable_hud", "enable"), &PlayerController3D::set_enable_hud);
+	ClassDB::bind_method(D_METHOD("is_enable_hud"), &PlayerController3D::is_enable_hud);
+
+	// Properties
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "player_data", PROPERTY_HINT_RESOURCE_TYPE, "Player"), "set_player_data", "get_player_data");
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "camera_distance", PROPERTY_HINT_RANGE, "1,50,0.1"), "set_camera_distance", "get_camera_distance");
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "camera_distance_min", PROPERTY_HINT_RANGE, "1,20,0.1"), "set_camera_distance_min", "get_camera_distance_min");

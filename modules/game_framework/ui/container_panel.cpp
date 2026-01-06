@@ -30,6 +30,12 @@ void ContainerPanel::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_title", "title"), &ContainerPanel::set_title);
 	ClassDB::bind_method(D_METHOD("get_title"), &ContainerPanel::get_title);
 
+	ClassDB::bind_method(D_METHOD("set_title_label_path", "path"), &ContainerPanel::set_title_label_path);
+	ClassDB::bind_method(D_METHOD("get_title_label_path"), &ContainerPanel::get_title_label_path);
+
+	ClassDB::bind_method(D_METHOD("set_slot_grid_path", "path"), &ContainerPanel::set_slot_grid_path);
+	ClassDB::bind_method(D_METHOD("get_slot_grid_path"), &ContainerPanel::get_slot_grid_path);
+
 	ClassDB::bind_method(D_METHOD("get_slot", "index"), &ContainerPanel::get_slot);
 	ClassDB::bind_method(D_METHOD("get_slot_count"), &ContainerPanel::get_slot_count);
 

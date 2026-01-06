@@ -19,6 +19,8 @@ GameFramework::~GameFramework() {
 }
 
 void GameFramework::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("set_tile_size", "size"), &GameFramework::set_tile_size);
+	ClassDB::bind_method(D_METHOD("get_tile_size"), &GameFramework::get_tile_size);
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "tile_size", PROPERTY_HINT_RANGE, "0.1,10.0,0.1"), "set_tile_size", "get_tile_size");
 }
 

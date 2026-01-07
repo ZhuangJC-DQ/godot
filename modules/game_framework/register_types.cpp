@@ -38,6 +38,7 @@
 #include "player.h"
 #include "player_controller_3d.h"
 #include "world_object.h"
+#include "world_object_node_3d.h"
 
 // UI组件
 #include "ui/container_panel.h"
@@ -66,6 +67,7 @@ void initialize_game_framework_module(ModuleInitializationLevel p_level) {
 
 	// === 世界物体系统 ===
 	GDREGISTER_CLASS(WorldObject);
+	GDREGISTER_CLASS(WorldObjectNode3D);
 
 	// === 角色系统（注意继承顺序：基类先注册）===
 	GDREGISTER_CLASS(Character);

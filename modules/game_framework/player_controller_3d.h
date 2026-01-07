@@ -14,6 +14,7 @@
 
 class PlayerHUD;
 class ContainerPanel;
+class WorldObject;
 
 // 第三人称玩家控制器 - 博德之门风格俯视角
 class PlayerController3D : public Node3D {
@@ -51,6 +52,7 @@ private:
 	bool enable_hud = true;              // 是否启用HUD
 	PlayerHUD *player_hud = nullptr;     // 玩家HUD
 	ContainerPanel *inventory_panel = nullptr;  // 背包面板
+	ContainerPanel *world_object_panel = nullptr;  // WorldObject容器面板
 
 	// === 内部方法 ===
 	void _setup_mesh();
@@ -60,6 +62,7 @@ private:
 	void _process_movement(double p_delta);
 	void _process_camera(double p_delta);
 	void _update_camera_position();
+	void _handle_mouse_click(const Vector2 &p_screen_pos);  // 处理鼠标点击射线检测
 
 protected:
 	static void _bind_methods();
@@ -72,9 +75,9 @@ public:
 	PlayerController3D();
 	virtual ~PlayerController3D();
 
-	// === Player 数据 ===
-	void set_player_data(const Ref<Player> &p_player);
-	Ref<Player> get_player_data() const { return player_data; }
+	// === Player 数据（内部管理） ===
+	// player_data 在构造函数中自动创建，不对外暴露设置接口
+	Player *get_player() const { return player_data.ptr(); }
 
 	// === 摄像机设置 ===
 	void set_camera_distance(float p_distance);
@@ -118,4 +121,9 @@ public:
 	void toggle_inventory();
 	void show_inventory();
 	void hide_inventory();
+
+	// === WorldObject交互 ===
+	void show_world_object_container(WorldObject *p_world_object);
+	void hide_world_object_container();
+
 };

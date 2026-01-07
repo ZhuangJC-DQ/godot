@@ -66,7 +66,6 @@ bool WorldObject::container_add_item(const Ref<Item> &p_item) {
 	for (int32_t i = 0; i < container_capacity; i++) {
 		if (container[i].is_null() || container[i]->is_empty()) {
 			container.write[i] = p_item;
-			GDVIRTUAL_CALL(_on_item_added, i, p_item);
 			return true;
 		}
 	}
@@ -89,7 +88,6 @@ bool WorldObject::container_add_item_at(int32_t p_slot, const Ref<Item> &p_item)
 	}
 
 	container.write[p_slot] = p_item;
-	GDVIRTUAL_CALL(_on_item_added, p_slot, p_item);
 	return true;
 }
 
@@ -99,7 +97,6 @@ Ref<Item> WorldObject::container_remove_item(int32_t p_slot) {
 	Ref<Item> item = container[p_slot];
 	if (item.is_valid()) {
 		container.write[p_slot] = Ref<Item>();
-		GDVIRTUAL_CALL(_on_item_removed, p_slot, item);
 	}
 	return item;
 }
@@ -112,16 +109,7 @@ Ref<Item> WorldObject::container_get_item(int32_t p_slot) const {
 bool WorldObject::container_set_item(int32_t p_slot, const Ref<Item> &p_item) {
 	ERR_FAIL_INDEX_V(p_slot, container_capacity, false);
 
-	Ref<Item> old_item = container[p_slot];
-	if (old_item.is_valid()) {
-		GDVIRTUAL_CALL(_on_item_removed, p_slot, old_item);
-	}
-
 	container.write[p_slot] = p_item;
-
-	if (p_item.is_valid()) {
-		GDVIRTUAL_CALL(_on_item_added, p_slot, p_item);
-	}
 
 	return true;
 }
@@ -129,7 +117,6 @@ bool WorldObject::container_set_item(int32_t p_slot, const Ref<Item> &p_item) {
 void WorldObject::container_clear() {
 	for (int32_t i = 0; i < container.size(); i++) {
 		if (container[i].is_valid()) {
-			GDVIRTUAL_CALL(_on_item_removed, i, container[i]);
 			container.write[i] = Ref<Item>();
 		}
 	}
@@ -188,7 +175,6 @@ int32_t WorldObject::container_add_items(const StringName &p_item_id, int32_t p_
 		Ref<Item> new_item = Item::create(p_item_id, remaining);
 		remaining = 0; // 默认全部添加（如果有堆叠限制会被调整）
 		container.write[slot] = new_item;
-		GDVIRTUAL_CALL(_on_item_added, slot, new_item);
 	}
 
 	return remaining;
@@ -206,7 +192,6 @@ int32_t WorldObject::container_remove_items(const StringName &p_item_id, int32_t
 			if (qty <= to_remove) {
 				removed += qty;
 				to_remove -= qty;
-				GDVIRTUAL_CALL(_on_item_removed, i, container[i]);
 				container.write[i] = Ref<Item>();
 			} else {
 				container[i]->remove_quantity(to_remove);
@@ -250,7 +235,8 @@ bool WorldObject::container_try_stack(const Ref<Item> &p_item) {
 // ============ 交互接口 ============
 
 void WorldObject::interact(Object *p_actor) {
-	GDVIRTUAL_CALL(_on_interact, p_actor);
+	// 默认交互行为：如果有容器，则在后续由控制器显示容器UI
+	// 这里可以添加其他通用的交互逻辑
 }
 
 TypedArray<Dictionary> WorldObject::harvest(Object *p_actor) {
@@ -262,9 +248,6 @@ TypedArray<Dictionary> WorldObject::harvest(Object *p_actor) {
 			loot.push_back(item->serialize());
 		}
 	}
-
-	// 调用虚函数让子类可以修改掉落物
-	GDVIRTUAL_CALL(_on_harvest, p_actor, loot);
 
 	return loot;
 }

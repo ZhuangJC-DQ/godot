@@ -4,25 +4,24 @@
 
 #include "player_controller_3d.h"
 
+#include "player.h"
 #include "ui/container_panel.h"
 #include "ui/player_hud.h"
+#include "world_object.h"
+#include "world_object_node_3d.h"
 
 #include "core/config/engine.h"
-#include "core/io/resource_loader.h"
-#include "scene/resources/packed_scene.h"
 #include "core/input/input.h"
 #include "core/input/input_event.h"
+#include "core/io/resource_loader.h"
 #include "scene/main/canvas_layer.h"
 #include "scene/main/viewport.h"
-#include "scene/resources/3d/capsule_shape_3d.h"
 #include "scene/resources/3d/primitive_meshes.h"
 #include "scene/resources/material.h"
+#include "scene/resources/packed_scene.h"
 
 void PlayerController3D::_bind_methods() {
 	// Bind methods for properties
-	ClassDB::bind_method(D_METHOD("set_player_data", "player"), &PlayerController3D::set_player_data);
-	ClassDB::bind_method(D_METHOD("get_player_data"), &PlayerController3D::get_player_data);
-
 	ClassDB::bind_method(D_METHOD("set_camera_distance", "distance"), &PlayerController3D::set_camera_distance);
 	ClassDB::bind_method(D_METHOD("get_camera_distance"), &PlayerController3D::get_camera_distance);
 
@@ -54,7 +53,6 @@ void PlayerController3D::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("is_enable_hud"), &PlayerController3D::is_enable_hud);
 
 	// Properties
-	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "player_data", PROPERTY_HINT_RESOURCE_TYPE, "Player"), "set_player_data", "get_player_data");
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "camera_distance", PROPERTY_HINT_RANGE, "1,50,0.1"), "set_camera_distance", "get_camera_distance");
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "camera_distance_min", PROPERTY_HINT_RANGE, "1,20,0.1"), "set_camera_distance_min", "get_camera_distance_min");
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "camera_distance_max", PROPERTY_HINT_RANGE, "10,100,0.1"), "set_camera_distance_max", "get_camera_distance_max");
@@ -70,6 +68,10 @@ void PlayerController3D::_bind_methods() {
 PlayerController3D::PlayerController3D() {
 	// 创建默认 Player 数据
 	player_data.instantiate();
+	player_data->set_health(80.f);
+	player_data->set_mana(70.f);
+	player_data->set_experience(player_data->get_experience_to_next_level() * 0.4f);
+	player_data->set_level(12);
 }
 
 PlayerController3D::~PlayerController3D() = default;
@@ -126,6 +128,14 @@ void PlayerController3D::unhandled_input(const Ref<InputEvent> &p_event) {
 	if (key_event.is_valid() && key_event->is_pressed() && !key_event->is_echo()) {
 		if (key_event->get_keycode() == Key::I) {
 			toggle_inventory();
+		}
+	}
+
+	// 处理鼠标左键点击 - 射线检测交互
+	Ref<InputEventMouseButton> mouse_click_event = p_event;
+	if (mouse_click_event.is_valid() && mouse_click_event->is_pressed()) {
+		if (mouse_click_event->get_button_index() == MouseButton::LEFT) {
+			_handle_mouse_click(mouse_click_event->get_position());
 		}
 	}
 }
@@ -285,12 +295,6 @@ void PlayerController3D::_update_camera_position() {
 	camera_pivot->set_position(Vector3(0, 1.0f, 0)); // 看向角色中心偏上
 }
 
-// === Player 数据 ===
-
-void PlayerController3D::set_player_data(const Ref<Player> &p_player) {
-	player_data = p_player;
-}
-
 // === 摄像机设置 ===
 
 void PlayerController3D::set_camera_distance(float p_distance) {
@@ -318,7 +322,7 @@ void PlayerController3D::_setup_hud() {
 	// 创建CanvasLayer用于UI（这样UI不会受3D摄像机影响）
 	CanvasLayer *ui_layer = memnew(CanvasLayer);
 	ui_layer->set_name("UILayer");
-	ui_layer->set_layer(10);  // 确保在最上层
+	ui_layer->set_layer(10); // 确保在最上层
 	add_child(ui_layer);
 
 	// 从场景文件加载PlayerHUD
@@ -358,6 +362,23 @@ void PlayerController3D::_setup_hud() {
 	} else {
 		ERR_PRINT("PlayerController3D: 无法加载ContainerPanel场景文件: res://ui/container_panel.tscn");
 	}
+
+	// 从场景文件加载WorldObject容器面板（默认隐藏）
+	Ref<PackedScene> world_object_scene = ResourceLoader::load("res://ui/container_panel.tscn");
+	if (world_object_scene.is_valid()) {
+		world_object_panel = Object::cast_to<ContainerPanel>(world_object_scene->instantiate());
+		if (world_object_panel) {
+			world_object_panel->set_name("WorldObjectPanel");
+			world_object_panel->set_title("Container");
+			world_object_panel->set_columns(4);
+			world_object_panel->set_anchors_preset(Control::PRESET_CENTER);
+			world_object_panel->set_position(Vector2(200, 0)); // 偏移一些位置避免重叠
+			world_object_panel->hide();
+			ui_layer->add_child(world_object_panel);
+		}
+	} else {
+		ERR_PRINT("PlayerController3D: 无法加载WorldObject ContainerPanel场景文件: res://ui/container_panel.tscn");
+	}
 }
 
 void PlayerController3D::set_enable_hud(bool p_enable) {
@@ -384,5 +405,89 @@ void PlayerController3D::show_inventory() {
 void PlayerController3D::hide_inventory() {
 	if (inventory_panel) {
 		inventory_panel->hide();
+	}
+}
+
+// === 鼠标射线检测 ===
+
+void PlayerController3D::_handle_mouse_click(const Vector2 &p_screen_pos) {
+	if (!camera) {
+		return;
+	}
+
+	// 从摄像机发射射线
+	Vector3 ray_origin = camera->project_ray_origin(p_screen_pos);
+	Vector3 ray_direction = camera->project_ray_normal(p_screen_pos);
+	float ray_length = 1000.0f;
+
+	// 获取世界的物理空间
+	PhysicsDirectSpaceState3D *space_state = get_world_3d()->get_direct_space_state();
+	if (!space_state) {
+		return;
+	}
+
+	// 创建射线查询参数
+	PhysicsDirectSpaceState3D::RayParameters ray_params;
+	ray_params.from = ray_origin;
+	ray_params.to = ray_origin + ray_direction * ray_length;
+
+	// 执行射线投射
+	PhysicsDirectSpaceState3D::RayResult ray_result;
+	bool hit = space_state->intersect_ray(ray_params, ray_result);
+	
+	if (!hit) {
+		print_line("[PlayerController3D] 射线未命中任何物体");
+		return; // 没有命中任何物体
+	}
+	
+	print_line("[PlayerController3D] 射线命中对象: ", ray_result.collider ? ray_result.collider->get_class() : "null");
+
+	// 获取命中的对象
+	Object *collider_obj = ray_result.collider;
+	if (!collider_obj) {
+		return;
+	}
+
+	// 检查是否是 WorldObjectNode3D
+	WorldObjectNode3D *world_obj_node = Object::cast_to<WorldObjectNode3D>(collider_obj);
+	if (world_obj_node) {
+		Ref<WorldObject> world_obj = world_obj_node->get_world_object();
+		if (world_obj.is_valid()) {
+			// 调用交互方法
+			world_obj->interact(this);
+			
+			// 如果有容器，显示容器UI
+			if (world_obj->has_container()) {
+				show_world_object_container(world_obj.ptr());
+			}
+			return;
+		}
+	}
+
+	// 打印调试信息
+	print_line("Mouse clicked on non-WorldObject: ", collider_obj->get_class());
+}
+
+// === WorldObject交互 ===
+
+void PlayerController3D::show_world_object_container(WorldObject *p_world_object) {
+	if (!p_world_object || !world_object_panel) {
+		return;
+	}
+
+	if (!p_world_object->has_container()) {
+		return;
+	}
+
+	// 绑定WorldObject的容器到面板
+	world_object_panel->bind_container(p_world_object);
+	world_object_panel->set_title(p_world_object->get_object_id());
+	world_object_panel->show();
+	world_object_panel->refresh();
+}
+
+void PlayerController3D::hide_world_object_container() {
+	if (world_object_panel) {
+		world_object_panel->hide();
 	}
 }

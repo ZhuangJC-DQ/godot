@@ -6,7 +6,6 @@
 
 #include "item.h"
 
-#include "core/object/gdvirtual.gen.inc"
 #include "core/object/ref_counted.h"
 #include "core/variant/dictionary.h"
 #include "core/variant/typed_array.h"
@@ -38,12 +37,6 @@ private:
 
 protected:
 	static void _bind_methods();
-
-	// 虚函数声明（可被GDScript或子类重写）
-	GDVIRTUAL1(_on_interact, Object *)
-	GDVIRTUAL2(_on_harvest, Object *, TypedArray<Dictionary>)
-	GDVIRTUAL2(_on_item_added, int32_t, Ref<Item>)
-	GDVIRTUAL2(_on_item_removed, int32_t, Ref<Item>)
 
 public:
 	WorldObject();

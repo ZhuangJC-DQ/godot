@@ -9,7 +9,6 @@ ambient_light_color = Color(0.5, 0.5, 0.5, 1)
 [node name="Main" type="Node3D" unique_id=1256079051]
 
 [node name="GameFramework" type="GameFramework" parent="." unique_id=1760287935]
-tile_size = 10.0
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1331545057]
 environment = SubResource("Environment_world")

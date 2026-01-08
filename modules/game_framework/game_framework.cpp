@@ -11,6 +11,7 @@
 #include "scene/resources/3d/primitive_meshes.h"
 #include "scene/resources/image_texture.h"
 #include "scene/resources/material.h"
+#include "world_object_node_3d.h"
 
 GameFramework::GameFramework() {
 }
@@ -263,128 +264,107 @@ void GameFramework::create_terrain_mesh(Chunk *chunk) {
 }
 
 void GameFramework::create_entity_visuals(Chunk *chunk) {
-	// 创建城市可视化（正方体）
+	// 创建城市可视化（使用 WorldObjectNode3D 以支持射线检测）
 	for (int i = 0; i < chunk->cities.size(); i++) {
 		const CityData &city = chunk->cities[i];
 
-		MeshInstance3D *mesh_instance = memnew(MeshInstance3D);
-		mesh_instance->set_name(vformat("City_%d", i));
+		WorldObjectNode3D *city_node = memnew(WorldObjectNode3D);
+		city_node->set_name(vformat("City_%d", i));
+		city_node->set_world_object(city.world_object);
 
-		Ref<BoxMesh> box_mesh;
-		box_mesh.instantiate();
-		box_mesh->set_size(Vector3(4.0f, 4.0f, 4.0f));
-		mesh_instance->set_mesh(box_mesh);
-
-		// 创建材质（金色）
-		Ref<StandardMaterial3D> material;
-		material.instantiate();
-		material->set_albedo(Color(1.0f, 0.84f, 0.0f)); // 金色
-		mesh_instance->set_surface_override_material(0, material);
+		// 创建默认视觉表示（金色立方体）
+		city_node->create_default_visual(Vector3(4.0f, 4.0f, 4.0f), Color(1.0f, 0.84f, 0.0f));
 
 		// 设置位置
 		float pos_x = city.position.x * tile_size;
 		float pos_z = city.position.y * tile_size;
-		mesh_instance->set_position(Vector3(pos_x, 2.0f, pos_z));
+		city_node->set_position(Vector3(pos_x, 2.0f, pos_z));
 
-		chunk_visual->add_child(mesh_instance);
+		chunk_visual->add_child(city_node);
 	}
 
-	// 创建怪物可视化（胶囊体）
+	// 创建怪物可视化（使用 WorldObjectNode3D 以支持射线检测）
 	for (int i = 0; i < chunk->monsters.size(); i++) {
 		const MonsterSpawnData &monster_data = chunk->monsters[i];
 
-		MeshInstance3D *mesh_instance = memnew(MeshInstance3D);
-		mesh_instance->set_name(vformat("Monster_%d", i));
+		WorldObjectNode3D *monster_node = memnew(WorldObjectNode3D);
+		monster_node->set_name(vformat("Monster_%d", i));
+		monster_node->set_world_object(monster_data.monster);
 
-		Ref<CapsuleMesh> capsule_mesh;
-		capsule_mesh.instantiate();
-		capsule_mesh->set_radius(1.0f);
-		capsule_mesh->set_height(3.0f);
-		mesh_instance->set_mesh(capsule_mesh);
-
-		// 根据怪物等级设置颜色
-		Ref<StandardMaterial3D> material;
-		material.instantiate();
+		// 确定颜色（基于怪物等级）
+		Color monster_color = Color(1.0f, 0.0f, 0.0f); // 默认红色
 		if (monster_data.monster.is_valid()) {
 			switch (monster_data.monster->get_rank()) {
 				case MONSTER_RANK_NORMAL:
-					material->set_albedo(Color(1.0f, 0.0f, 0.0f)); // 红色
+					monster_color = Color(1.0f, 0.0f, 0.0f); // 红色
 					break;
 				case MONSTER_RANK_ELITE:
-					material->set_albedo(Color(1.0f, 0.5f, 0.0f)); // 橙色
+					monster_color = Color(1.0f, 0.5f, 0.0f); // 橙色
 					break;
 				case MONSTER_RANK_CHAMPION:
-					material->set_albedo(Color(0.8f, 0.0f, 0.8f)); // 紫色
+					monster_color = Color(0.8f, 0.0f, 0.8f); // 紫色
 					break;
 				case MONSTER_RANK_BOSS:
-					material->set_albedo(Color(0.0f, 0.0f, 0.0f)); // 黑色
+					monster_color = Color(0.0f, 0.0f, 0.0f); // 黑色
 					break;
 				default:
-					material->set_albedo(Color(0.5f, 0.0f, 0.0f)); // 深红
+					monster_color = Color(0.5f, 0.0f, 0.0f); // 深红
 					break;
 			}
-		} else {
-			material->set_albedo(Color(1.0f, 0.0f, 0.0f));
 		}
-		mesh_instance->set_surface_override_material(0, material);
+
+		// 创建默认视觉表示（胶囊体）
+		monster_node->create_default_visual(Vector3(2.0f, 3.0f, 2.0f), monster_color);
 
 		// 设置位置
 		float pos_x = monster_data.position.x * tile_size;
 		float pos_z = monster_data.position.y * tile_size;
-		mesh_instance->set_position(Vector3(pos_x, 1.5f, pos_z));
+		monster_node->set_position(Vector3(pos_x, 1.5f, pos_z));
 
-		chunk_visual->add_child(mesh_instance);
+		chunk_visual->add_child(monster_node);
 	}
 
-	// 创建 NPC 可视化（圆锥/圆柱体）
+	// 创建 NPC 可视化（使用 WorldObjectNode3D 以支持射线检测）
 	for (int i = 0; i < chunk->npcs.size(); i++) {
 		const NPCSpawnData &npc_data = chunk->npcs[i];
 
-		MeshInstance3D *mesh_instance = memnew(MeshInstance3D);
-		mesh_instance->set_name(vformat("NPC_%d", i));
+		WorldObjectNode3D *npc_node = memnew(WorldObjectNode3D);
+		npc_node->set_name(vformat("NPC_%d", i));
+		npc_node->set_world_object(npc_data.npc);
 
-		// 使用圆柱体，顶部半径为0模拟圆锥
-		Ref<CylinderMesh> cone_mesh;
-		cone_mesh.instantiate();
-		cone_mesh->set_top_radius(0.0f); // 顶部为0，形成圆锥
-		cone_mesh->set_bottom_radius(1.0f);
-		cone_mesh->set_height(3.0f);
-		mesh_instance->set_mesh(cone_mesh);
-
-		// 根据 NPC 类型设置颜色
-		Ref<StandardMaterial3D> material;
-		material.instantiate();
+		// 确定颜色（基于 NPC 类型）
+		Color npc_color = Color(0.0f, 0.5f, 1.0f); // 默认蓝色
 		if (npc_data.npc.is_valid()) {
 			switch (npc_data.npc->get_npc_type()) {
 				case NPC_TYPE_VILLAGER:
-					material->set_albedo(Color(0.4f, 0.6f, 1.0f)); // 浅蓝
+					npc_color = Color(0.4f, 0.6f, 1.0f); // 浅蓝
 					break;
 				case NPC_TYPE_MERCHANT:
-					material->set_albedo(Color(0.0f, 1.0f, 0.0f)); // 绿色
+					npc_color = Color(0.0f, 1.0f, 0.0f); // 绿色
 					break;
 				case NPC_TYPE_QUEST_GIVER:
-					material->set_albedo(Color(1.0f, 1.0f, 0.0f)); // 黄色
+					npc_color = Color(1.0f, 1.0f, 0.0f); // 黄色
 					break;
 				case NPC_TYPE_TRAINER:
-					material->set_albedo(Color(0.0f, 1.0f, 1.0f)); // 青色
+					npc_color = Color(0.0f, 1.0f, 1.0f); // 青色
 					break;
 				case NPC_TYPE_GUARD:
-					material->set_albedo(Color(0.5f, 0.5f, 1.0f)); // 蓝紫
+					npc_color = Color(0.5f, 0.5f, 1.0f); // 蓝紫
 					break;
 				default:
-					material->set_albedo(Color(0.0f, 0.5f, 1.0f)); // 蓝色
+					npc_color = Color(0.0f, 0.5f, 1.0f); // 蓝色
 					break;
 			}
-		} else {
-			material->set_albedo(Color(0.0f, 0.5f, 1.0f));
 		}
-		mesh_instance->set_surface_override_material(0, material);
+
+		// 创建默认视觉表示（圆柱体）
+		npc_node->create_default_visual(Vector3(2.0f, 3.0f, 2.0f), npc_color);
 
 		// 设置位置
 		float pos_x = npc_data.position.x * tile_size;
 		float pos_z = npc_data.position.y * tile_size;
-		mesh_instance->set_position(Vector3(pos_x, 1.5f, pos_z));
+		npc_node->set_position(Vector3(pos_x, 1.5f, pos_z));
 
-		chunk_visual->add_child(mesh_instance);
+		chunk_visual->add_child(npc_node);
 	}
 }

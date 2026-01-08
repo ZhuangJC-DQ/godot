@@ -423,6 +423,7 @@ void PlayerController3D::_handle_mouse_click(const Vector2 &p_screen_pos) {
 	// 获取世界的物理空间
 	PhysicsDirectSpaceState3D *space_state = get_world_3d()->get_direct_space_state();
 	if (!space_state) {
+		print_line("[PlayerController3D] 物理空间状态为null");
 		return;
 	}
 
@@ -431,16 +432,22 @@ void PlayerController3D::_handle_mouse_click(const Vector2 &p_screen_pos) {
 	ray_params.from = ray_origin;
 	ray_params.to = ray_origin + ray_direction * ray_length;
 
+	print_line(vformat("[PlayerController3D] 射线起点: %.2f, %.2f, %.2f | 方向: %.2f, %.2f, %.2f",
+		ray_origin.x, ray_origin.y, ray_origin.z,
+		ray_direction.x, ray_direction.y, ray_direction.z));
+
 	// 执行射线投射
 	PhysicsDirectSpaceState3D::RayResult ray_result;
 	bool hit = space_state->intersect_ray(ray_params, ray_result);
-	
+
 	if (!hit) {
 		print_line("[PlayerController3D] 射线未命中任何物体");
 		return; // 没有命中任何物体
 	}
-	
+
 	print_line("[PlayerController3D] 射线命中对象: ", ray_result.collider ? ray_result.collider->get_class() : "null");
+	print_line(vformat("[PlayerController3D] 命中点: %.2f, %.2f, %.2f",
+		ray_result.position.x, ray_result.position.y, ray_result.position.z));
 
 	// 获取命中的对象
 	Object *collider_obj = ray_result.collider;
@@ -451,11 +458,12 @@ void PlayerController3D::_handle_mouse_click(const Vector2 &p_screen_pos) {
 	// 检查是否是 WorldObjectNode3D
 	WorldObjectNode3D *world_obj_node = Object::cast_to<WorldObjectNode3D>(collider_obj);
 	if (world_obj_node) {
+		print_line("[PlayerController3D] 命中了 WorldObjectNode3D!");
 		Ref<WorldObject> world_obj = world_obj_node->get_world_object();
 		if (world_obj.is_valid()) {
 			// 调用交互方法
 			world_obj->interact(this);
-			
+
 			// 如果有容器，显示容器UI
 			if (world_obj->has_container()) {
 				show_world_object_container(world_obj.ptr());

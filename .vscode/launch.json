@@ -9,7 +9,7 @@
 			"name": "编译运行 - 编辑器",
 			"type": "cppvsdbg",
 			"request": "launch",
-			"program": "${workspaceFolder}/bin/godot.windows.editor.dev.x86_64.exe",
+			"program": "${workspaceFolder}/bin/Mu.windows.editor.dev.x86_64.exe",
 			"args": [
 				"--editor"
 			],
@@ -24,7 +24,7 @@
 			"name": "编译运行 - 项目",
 			"type": "cppvsdbg",
 			"request": "launch",
-			"program": "${workspaceFolder}/bin/godot.windows.editor.dev.x86_64.exe",
+			"program": "${workspaceFolder}/bin/Mu.windows.editor.dev.x86_64.exe",
 			"args": [
 				"--editor",
 				"--path",
@@ -41,7 +41,7 @@
 			"name": "编译运行 - 游戏",
 			"type": "cppvsdbg",
 			"request": "launch",
-			"program": "${workspaceFolder}/bin/godot.windows.editor.dev.x86_64.exe",
+			"program": "${workspaceFolder}/bin/Mu.windows.editor.dev.x86_64.exe",
 			"args": [
 				"--path",
 				"${workspaceFolder}/Project/cpp-model"
@@ -58,7 +58,7 @@
 			"name": "直接运行 - 编辑器",
 			"type": "cppvsdbg",
 			"request": "launch",
-			"program": "${workspaceFolder}/bin/godot.windows.editor.dev.x86_64.exe",
+			"program": "${workspaceFolder}/bin/Mu.windows.editor.dev.x86_64.exe",
 			"args": [
 				"--editor"
 			],
@@ -72,7 +72,7 @@
 			"name": "直接运行 - 项目",
 			"type": "cppvsdbg",
 			"request": "launch",
-			"program": "${workspaceFolder}/bin/godot.windows.editor.dev.x86_64.exe",
+			"program": "${workspaceFolder}/bin/Mu.windows.editor.dev.x86_64.exe",
 			"args": [
 				"--editor",
 				"--path",
@@ -88,7 +88,7 @@
 			"name": "直接运行 - 游戏",
 			"type": "cppvsdbg",
 			"request": "launch",
-			"program": "${workspaceFolder}/bin/godot.windows.editor.dev.x86_64.exe",
+			"program": "${workspaceFolder}/bin/Mu.windows.editor.dev.x86_64.exe",
 			"args": [
 				"--path",
 				"${workspaceFolder}/Project/cpp-model"

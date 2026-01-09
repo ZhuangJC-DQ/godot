@@ -174,7 +174,7 @@ void GameFramework::visualize_chunk(int32_t chunk_x, int32_t chunk_y) {
 	chunk_visual->set_owner(scene_root);
 
 	// 创建地形网格
-	create_terrain_mesh(chunk);
+	// create_terrain_mesh(chunk);
 
 	// 创建实体可视化
 	create_entity_visuals(chunk);

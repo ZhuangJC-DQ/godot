@@ -3853,8 +3853,8 @@ void Main::setup_boot_logo() {
 
 #if defined(TOOLS_ENABLED) && defined(MACOS_ENABLED)
 		if (DisplayServer::get_singleton()->has_feature(DisplayServer::FEATURE_ICON) && OS::get_singleton()->get_bundle_icon_path().is_empty()) {
-			Ref<Image> icon = memnew(Image(app_icon_png));
-			DisplayServer::get_singleton()->set_icon(icon);
+			// Ref<Image> icon = memnew(Image(app_icon_png));
+			// DisplayServer::get_singleton()->set_icon(icon);
 		}
 #endif
 	}
@@ -4641,27 +4641,27 @@ int Main::start() {
 #endif
 				String mac_icon_path = GLOBAL_GET("application/config/macos_native_icon");
 				if (DisplayServer::get_singleton()->has_feature(DisplayServer::FEATURE_NATIVE_ICON) && !mac_icon_path.is_empty() && !has_icon) {
-					DisplayServer::get_singleton()->set_native_icon(mac_icon_path);
-					has_icon = true;
+					// DisplayServer::get_singleton()->set_native_icon(mac_icon_path);
+					// has_icon = true;
 				}
 #endif
 
 #ifdef WINDOWS_ENABLED
 				String win_icon_path = GLOBAL_GET("application/config/windows_native_icon");
 				if (DisplayServer::get_singleton()->has_feature(DisplayServer::FEATURE_NATIVE_ICON) && !win_icon_path.is_empty()) {
-					DisplayServer::get_singleton()->set_native_icon(win_icon_path);
-					has_icon = true;
+					// DisplayServer::get_singleton()->set_native_icon(win_icon_path);
+					// has_icon = true;
 				}
 #endif
 
 				String icon_path = GLOBAL_GET("application/config/icon");
 				if (DisplayServer::get_singleton()->has_feature(DisplayServer::FEATURE_ICON) && !icon_path.is_empty() && !has_icon) {
-					Ref<Image> icon;
-					icon.instantiate();
-					if (ImageLoader::load_image(icon_path, icon) == OK) {
-						DisplayServer::get_singleton()->set_icon(icon);
-						has_icon = true;
-					}
+					// Ref<Image> icon;
+					// icon.instantiate();
+					// if (ImageLoader::load_image(icon_path, icon) == OK) {
+					// 	DisplayServer::get_singleton()->set_icon(icon);
+					// 	has_icon = true;
+					// }
 				}
 			}
 

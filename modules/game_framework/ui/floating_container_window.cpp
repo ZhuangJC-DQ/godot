@@ -10,6 +10,9 @@
 #include "scene/gui/margin_container.h"
 #include "scene/gui/panel_container.h"
 
+// 初始化静态成员
+HashMap<WorldObject *, FloatingContainerWindow *> FloatingContainerWindow::s_open_windows;
+
 void FloatingContainerWindow::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("bind_container", "object", "title"), &FloatingContainerWindow::bind_container, DEFVAL(""));
 	ClassDB::bind_method(D_METHOD("unbind_container"), &FloatingContainerWindow::unbind_container);
@@ -54,6 +57,10 @@ FloatingContainerWindow::FloatingContainerWindow() {
 }
 
 FloatingContainerWindow::~FloatingContainerWindow() {
+	// 从静态映射中移除
+	if (bound_object) {
+		unregister_window(bound_object);
+	}
 	unbind_container();
 }
 
@@ -114,6 +121,9 @@ void FloatingContainerWindow::bind_container(WorldObject *p_object, const String
 	bound_object = p_object;
 
 	if (bound_object) {
+		// 注册到静态映射
+		register_window(bound_object, this);
+
 		// 设置标题
 		String title = p_title;
 		if (title.is_empty()) {
@@ -131,6 +141,9 @@ void FloatingContainerWindow::bind_container(WorldObject *p_object, const String
 
 void FloatingContainerWindow::unbind_container() {
 	if (bound_object) {
+		// 从静态映射中注销
+		unregister_window(bound_object);
+
 		bound_object = nullptr;
 
 		// 清空所有槽位
@@ -248,8 +261,20 @@ void FloatingContainerWindow::_on_slot_double_clicked(int slot_index) {
 		}
 		title = title + " (Container)";
 
-		// 创建新的浮动窗口
-		FloatingContainerWindow *new_window = create_and_show(item.ptr(), title, get_parent());
+		// 检查是否已经打开该Item的容器窗口
+		FloatingContainerWindow *existing_window = find_open_window(item.ptr());
+		if (existing_window && existing_window->is_inside_tree()) {
+			// 窗口已存在，置于前面并刷新
+			existing_window->grab_focus();
+			existing_window->move_to_foreground();
+			existing_window->refresh();
+		} else {
+			// 创建新的浮动窗口
+			FloatingContainerWindow *new_window = create_and_show(item.ptr(), title, get_parent());
+			if (new_window) {
+				register_window(item.ptr(), new_window);
+			}
+		}
 
 		// 发出信号
 		emit_signal("item_double_clicked", item, slot_index);
@@ -276,9 +301,14 @@ void FloatingContainerWindow::_on_slot_item_dropped(ItemSlot *from_slot, Ref<Ite
 }
 
 void FloatingContainerWindow::_on_close_requested() {
-	// 窗口关闭时清理
-	unbind_container();
-	queue_free();
+	if (close_hides) {
+		// 只隐藏窗口，不销毁
+		hide();
+	} else {
+		// 默认行为：窗口关闭时清理并销毁
+		unbind_container();
+		queue_free();
+	}
 }
 
 // === 静态工具方法 ===
@@ -294,4 +324,28 @@ FloatingContainerWindow *FloatingContainerWindow::create_and_show(WorldObject *p
 	window->popup_centered();
 
 	return window;
+}
+
+FloatingContainerWindow *FloatingContainerWindow::find_open_window(WorldObject *p_object) {
+	if (!p_object) {
+		return nullptr;
+	}
+
+	if (s_open_windows.has(p_object)) {
+		return s_open_windows[p_object];
+	}
+
+	return nullptr;
+}
+
+void FloatingContainerWindow::register_window(WorldObject *p_object, FloatingContainerWindow *p_window) {
+	if (p_object && p_window) {
+		s_open_windows[p_object] = p_window;
+	}
+}
+
+void FloatingContainerWindow::unregister_window(WorldObject *p_object) {
+	if (p_object && s_open_windows.has(p_object)) {
+		s_open_windows.erase(p_object);
+	}
 }

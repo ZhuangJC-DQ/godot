@@ -350,6 +350,8 @@ void PlayerController3D::_setup_hud() {
 			ui_layer
 		);
 		if (inventory_panel) {
+			// 背包窗口点叉号时只隐藏，不销毁，这样可以重复打开
+			inventory_panel->set_close_hides(true);
 			inventory_panel->hide();
 		}
 	}
@@ -363,7 +365,7 @@ void PlayerController3D::set_enable_hud(bool p_enable) {
 }
 
 void PlayerController3D::toggle_inventory() {
-	if (inventory_panel) {
+	if (inventory_panel && inventory_panel->is_inside_tree()) {
 		if (inventory_panel->is_visible()) {
 			hide_inventory();
 		} else {
@@ -373,14 +375,14 @@ void PlayerController3D::toggle_inventory() {
 }
 
 void PlayerController3D::show_inventory() {
-	if (inventory_panel) {
+	if (inventory_panel && inventory_panel->is_inside_tree()) {
 		inventory_panel->show();
 		inventory_panel->refresh();
 	}
 }
 
 void PlayerController3D::hide_inventory() {
-	if (inventory_panel) {
+	if (inventory_panel && inventory_panel->is_inside_tree()) {
 		inventory_panel->hide();
 	}
 }

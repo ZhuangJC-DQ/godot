@@ -20,6 +20,9 @@ class FloatingContainerWindow : public Window {
 	GDCLASS(FloatingContainerWindow, Window);
 
 private:
+	// 静态：跟踪所有已打开的窗口 (WorldObject* -> FloatingContainerWindow*)
+	static HashMap<WorldObject *, FloatingContainerWindow *> s_open_windows;
+
 	// 绑定的容器对象
 	WorldObject *bound_object = nullptr;
 
@@ -33,6 +36,7 @@ private:
 	int32_t columns = 5;
 	Size2 slot_size = Size2(64, 64);
 	int32_t slot_separation = 4;
+	bool close_hides = false;  // 为true时，点叉号只隐藏窗口，不销毁
 
 	// 内部方法
 	void _setup_ui();
@@ -67,7 +71,17 @@ public:
 	void set_slot_size(const Size2 &p_size);
 	Size2 get_slot_size() const { return slot_size; }
 
+	// 设置点叉号时是否只隐藏窗口（而不是销毁）
+	void set_close_hides(bool p_close_hides) { close_hides = p_close_hides; }
+	bool get_close_hides() const { return close_hides; }
+
 	// === 静态工具方法 ===
 	// 创建并显示一个浮动容器窗口
 	static FloatingContainerWindow *create_and_show(WorldObject *p_object, const String &p_title, Node *p_parent);
+
+	// 查找已打开的窗口
+	static FloatingContainerWindow *find_open_window(WorldObject *p_object);
+	// 注册/注销打开的窗口
+	static void register_window(WorldObject *p_object, FloatingContainerWindow *p_window);
+	static void unregister_window(WorldObject *p_object);
 };

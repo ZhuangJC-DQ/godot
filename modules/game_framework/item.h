@@ -4,8 +4,9 @@
 
 #pragma once
 
+#include "world_object.h"
+
 #include "core/object/gdvirtual.gen.inc"
-#include "core/object/ref_counted.h"
 #include "core/string/string_name.h"
 #include "core/variant/dictionary.h"
 #include "core/variant/typed_array.h"
@@ -45,8 +46,8 @@ enum ItemFlags : uint32_t {
 };
 
 // 物品基类 - 表示容器内的物品实例
-class Item : public RefCounted {
-	GDCLASS(Item, RefCounted);
+class Item : public WorldObject {
+	GDCLASS(Item, WorldObject);
 
 public:
 	// 物品最大堆叠数量上限
@@ -179,8 +180,8 @@ public:
 	void unequip(Object *p_user);        // 卸下物品
 
 	// === 序列化 ===
-	Dictionary serialize() const;
-	void deserialize(const Dictionary &p_data);
+	virtual Dictionary serialize() const override;
+	virtual void deserialize(const Dictionary &p_data) override;
 
 	// === 辅助方法 ===
 	String to_string() const;

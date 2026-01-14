@@ -230,7 +230,7 @@ void Item::unequip(Object *p_user) {
 // ============ 序列化 ============
 
 Dictionary Item::serialize() const {
-	Dictionary data;
+	Dictionary data = WorldObject::serialize();
 
 	// 核心数据
 	data["item_id"] = item_id;
@@ -275,6 +275,8 @@ Dictionary Item::serialize() const {
 }
 
 void Item::deserialize(const Dictionary &p_data) {
+	WorldObject::deserialize(p_data);
+
 	item_id = p_data.get("item_id", StringName());
 	quantity = p_data.get("quantity", 1);
 	display_name = p_data.get("display_name", StringName());

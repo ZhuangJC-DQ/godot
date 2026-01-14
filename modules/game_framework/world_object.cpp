@@ -3,9 +3,41 @@
 /**************************************************************************/
 
 #include "world_object.h"
+#include "item_container.h"
+#include "item.h"
+
+#include "core/object/class_db.h"
 
 void WorldObject::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("setup", "object_id", "type", "position"), &WorldObject::setup);
 
+	ClassDB::bind_method(D_METHOD("set_object_id", "id"), &WorldObject::set_object_id);
+	ClassDB::bind_method(D_METHOD("get_object_id"), &WorldObject::get_object_id);
+
+	ClassDB::bind_method(D_METHOD("set_object_type", "type"), &WorldObject::set_object_type);
+	ClassDB::bind_method(D_METHOD("get_object_type"), &WorldObject::get_object_type);
+
+	ClassDB::bind_method(D_METHOD("set_local_position", "position"), &WorldObject::set_local_position);
+	ClassDB::bind_method(D_METHOD("get_local_position"), &WorldObject::get_local_position);
+
+	ClassDB::bind_method(D_METHOD("init_container", "capacity", "nesting_depth"), &WorldObject::init_container, DEFVAL(0));
+	ClassDB::bind_method(D_METHOD("get_container"), &WorldObject::get_container);
+	ClassDB::bind_method(D_METHOD("get_container_capacity"), &WorldObject::get_container_capacity);
+	ClassDB::bind_method(D_METHOD("has_container"), &WorldObject::has_container);
+
+	ClassDB::bind_method(D_METHOD("container_add_object", "object"), &WorldObject::container_add_object);
+	ClassDB::bind_method(D_METHOD("container_get_object", "slot"), &WorldObject::container_get_object);
+	ClassDB::bind_method(D_METHOD("container_remove_object", "slot"), &WorldObject::container_remove_object);
+
+	ClassDB::bind_method(D_METHOD("serialize"), &WorldObject::serialize);
+	ClassDB::bind_method(D_METHOD("deserialize", "data"), &WorldObject::deserialize);
+
+	BIND_ENUM_CONSTANT(TYPE_GENERIC);
+	BIND_ENUM_CONSTANT(TYPE_CONTAINER);
+	BIND_ENUM_CONSTANT(TYPE_RESOURCE);
+	BIND_ENUM_CONSTANT(TYPE_FURNITURE);
+	BIND_ENUM_CONSTANT(TYPE_CRAFTING);
+	BIND_ENUM_CONSTANT(TYPE_INTERACTABLE);
 }
 
 WorldObject::WorldObject() = default;
@@ -20,216 +52,132 @@ void WorldObject::setup(const StringName &p_object_id, ObjectType p_type, const 
 
 // ============ 容器系统 ============
 
-void WorldObject::init_container(int32_t p_capacity) {
+void WorldObject::init_container(int32_t p_capacity, int32_t p_nesting_depth) {
 	ERR_FAIL_COND_MSG(p_capacity < 0, "Container capacity cannot be negative.");
-	container_capacity = p_capacity;
-	container.resize(p_capacity);
-	for (int32_t i = 0; i < p_capacity; i++) {
-		container.write[i] = Ref<Item>();
+
+	container.instantiate();
+	container->initialize(p_capacity, p_nesting_depth);
+	container->set_owner(this);
+}
+
+int32_t WorldObject::get_container_capacity() const {
+	if (!has_container()) {
+		return 0;
 	}
+	return container->get_capacity();
 }
 
 int32_t WorldObject::get_container_used_slots() const {
-	int32_t count = 0;
-	for (const Ref<Item> &item : container) {
-		if (item.is_valid() && !item->is_empty()) {
-			count++;
-		}
+	if (!has_container()) {
+		return 0;
 	}
-	return count;
+	return container->get_used_slots();
 }
 
 int32_t WorldObject::get_container_empty_slots() const {
-	return container_capacity - get_container_used_slots();
+	if (!has_container()) {
+		return 0;
+	}
+	return container->get_empty_slots();
 }
 
 bool WorldObject::is_container_full() const {
-	return get_container_used_slots() >= container_capacity;
+	if (!has_container()) {
+		return true;
+	}
+	return container->is_full();
 }
 
 bool WorldObject::is_container_empty() const {
-	return get_container_used_slots() == 0;
+	if (!has_container()) {
+		return true;
+	}
+	return container->is_empty();
 }
 
-bool WorldObject::container_add_item(const Ref<Item> &p_item) {
-	ERR_FAIL_COND_V_MSG(p_item.is_null(), false, "Cannot add null item.");
+int32_t WorldObject::get_container_depth() const {
+	if (!has_container()) {
+		return 0;
+	}
+	return container->get_nesting_depth();
+}
+
+// ============ 容器操作 ============
+
+bool WorldObject::container_add_object(const Ref<WorldObject> &p_object) {
 	ERR_FAIL_COND_V_MSG(!has_container(), false, "Object has no container.");
-
-	// 先尝试堆叠到现有物品
-	if (p_item->is_stackable() && container_try_stack(p_item)) {
-		if (p_item->is_empty()) {
-			return true;
-		}
-	}
-
-	// 查找空槽位
-	for (int32_t i = 0; i < container_capacity; i++) {
-		if (container[i].is_null() || container[i]->is_empty()) {
-			container.write[i] = p_item;
-			return true;
-		}
-	}
-
-	return false; // 容器已满
+	return container->add_object(p_object);
 }
 
-bool WorldObject::container_add_item_at(int32_t p_slot, const Ref<Item> &p_item) {
-	ERR_FAIL_INDEX_V(p_slot, container_capacity, false);
-	ERR_FAIL_COND_V_MSG(p_item.is_null(), false, "Cannot add null item.");
-
-	// 检查槽位是否为空
-	if (container[p_slot].is_valid() && !container[p_slot]->is_empty()) {
-		// 尝试堆叠
-		if (container[p_slot]->can_stack_with(p_item)) {
-			container[p_slot]->stack_with(p_item);
-			return p_item->is_empty();
-		}
-		return false;
-	}
-
-	container.write[p_slot] = p_item;
-	return true;
+bool WorldObject::container_add_object_at(int32_t p_slot, const Ref<WorldObject> &p_object) {
+	ERR_FAIL_COND_V_MSG(!has_container(), false, "Object has no container.");
+	return container->add_object_at(p_slot, p_object);
 }
 
-Ref<Item> WorldObject::container_remove_item(int32_t p_slot) {
-	ERR_FAIL_INDEX_V(p_slot, container_capacity, Ref<Item>());
-
-	Ref<Item> item = container[p_slot];
-	if (item.is_valid()) {
-		container.write[p_slot] = Ref<Item>();
-	}
-	return item;
+Ref<WorldObject> WorldObject::container_remove_object(int32_t p_slot) {
+	ERR_FAIL_COND_V_MSG(!has_container(), Ref<WorldObject>(), "Object has no container.");
+	return container->remove_object(p_slot);
 }
 
-Ref<Item> WorldObject::container_get_item(int32_t p_slot) const {
-	ERR_FAIL_INDEX_V(p_slot, container_capacity, Ref<Item>());
-	return container[p_slot];
+Ref<WorldObject> WorldObject::container_get_object(int32_t p_slot) const {
+	ERR_FAIL_COND_V_MSG(!has_container(), Ref<WorldObject>(), "Object has no container.");
+	return container->get_object(p_slot);
 }
 
-bool WorldObject::container_set_item(int32_t p_slot, const Ref<Item> &p_item) {
-	ERR_FAIL_INDEX_V(p_slot, container_capacity, false);
-
-	container.write[p_slot] = p_item;
-
-	return true;
+bool WorldObject::container_set_object(int32_t p_slot, const Ref<WorldObject> &p_object) {
+	ERR_FAIL_COND_V_MSG(!has_container(), false, "Object has no container.");
+	return container->set_object(p_slot, p_object);
 }
 
 void WorldObject::container_clear() {
-	for (int32_t i = 0; i < container.size(); i++) {
-		if (container[i].is_valid()) {
-			container.write[i] = Ref<Item>();
-		}
+	if (has_container()) {
+		container->clear();
 	}
 }
 
-int32_t WorldObject::container_find_item(const StringName &p_item_id) const {
-	for (int32_t i = 0; i < container.size(); i++) {
-		if (container[i].is_valid() && container[i]->get_item_id() == p_item_id) {
-			return i;
-		}
-	}
-	return -1;
+// ============ 高级容器操作 ============
+
+int32_t WorldObject::container_find_object(const StringName &p_object_id) const {
+	ERR_FAIL_COND_V_MSG(!has_container(), -1, "Object has no container.");
+	return container->find_object(p_object_id);
 }
 
-int32_t WorldObject::container_count_item(const StringName &p_item_id) const {
-	int32_t count = 0;
-	for (const Ref<Item> &item : container) {
-		if (item.is_valid() && item->get_item_id() == p_item_id) {
-			count += item->get_quantity();
-		}
+TypedArray<WorldObject> WorldObject::container_get_all_objects() const {
+	if (!has_container()) {
+		return TypedArray<WorldObject>();
 	}
-	return count;
+	return container->get_all_objects();
 }
 
-bool WorldObject::container_has_item(const StringName &p_item_id, int32_t p_quantity) const {
-	return container_count_item(p_item_id) >= p_quantity;
+// ============ Item 兼容方法 ============
+
+bool WorldObject::container_add_item(const Ref<Item> &p_item) {
+	ERR_FAIL_COND_V_MSG(!has_container(), false, "Object has no container.");
+	ERR_FAIL_COND_V_MSG(p_item.is_null(), false, "Cannot add null item.");
+
+	// Item 现在继承 WorldObject，可以直接添加
+	Ref<WorldObject> obj = p_item;
+	return container->add_object(obj);
 }
 
-int32_t WorldObject::container_add_items(const StringName &p_item_id, int32_t p_quantity) {
-	ERR_FAIL_COND_V_MSG(p_quantity <= 0, 0, "Quantity must be positive.");
-	ERR_FAIL_COND_V_MSG(!has_container(), p_quantity, "Object has no container.");
+Ref<Item> WorldObject::container_get_item(int32_t p_slot) const {
+	ERR_FAIL_COND_V_MSG(!has_container(), Ref<Item>(), "Object has no container.");
 
-	int32_t remaining = p_quantity;
-
-	// 先尝试添加到现有堆叠
-	for (int32_t i = 0; i < container.size() && remaining > 0; i++) {
-		if (container[i].is_valid() && container[i]->get_item_id() == p_item_id && !container[i]->is_full_stack()) {
-			remaining = container[i]->add_quantity(remaining);
-		}
+	Ref<WorldObject> obj = container->get_object(p_slot);
+	if (obj.is_null()) {
+		return Ref<Item>();
 	}
 
-	// 创建新堆叠
-	while (remaining > 0) {
-		int32_t slot = -1;
-		for (int32_t i = 0; i < container_capacity; i++) {
-			if (container[i].is_null() || container[i]->is_empty()) {
-				slot = i;
-				break;
-			}
-		}
-
-		if (slot < 0) {
-			break; // 没有空槽位
-		}
-
-		Ref<Item> new_item = Item::create(p_item_id, remaining);
-		remaining = 0; // 默认全部添加（如果有堆叠限制会被调整）
-		container.write[slot] = new_item;
-	}
-
-	return remaining;
+	// 尝试转换为 Item
+	return Object::cast_to<Item>(obj.ptr());
 }
 
-int32_t WorldObject::container_remove_items(const StringName &p_item_id, int32_t p_quantity) {
-	ERR_FAIL_COND_V_MSG(p_quantity <= 0, 0, "Quantity must be positive.");
+bool WorldObject::container_set_item(int32_t p_slot, const Ref<Item> &p_item) {
+	ERR_FAIL_COND_V_MSG(!has_container(), false, "Object has no container.");
 
-	int32_t removed = 0;
-	int32_t to_remove = p_quantity;
-
-	for (int32_t i = 0; i < container.size() && to_remove > 0; i++) {
-		if (container[i].is_valid() && container[i]->get_item_id() == p_item_id) {
-			int32_t qty = container[i]->get_quantity();
-			if (qty <= to_remove) {
-				removed += qty;
-				to_remove -= qty;
-				container.write[i] = Ref<Item>();
-			} else {
-				container[i]->remove_quantity(to_remove);
-				removed += to_remove;
-				to_remove = 0;
-			}
-		}
-	}
-
-	return removed;
-}
-
-TypedArray<Ref<Item>> WorldObject::container_get_all_items() const {
-	TypedArray<Ref<Item>> items;
-	for (const Ref<Item> &item : container) {
-		if (item.is_valid() && !item->is_empty()) {
-			items.push_back(item);
-		}
-	}
-	return items;
-}
-
-bool WorldObject::container_try_stack(const Ref<Item> &p_item) {
-	ERR_FAIL_COND_V_MSG(p_item.is_null(), false, "Cannot stack null item.");
-
-	if (!p_item->is_stackable()) {
-		return false;
-	}
-
-	bool stacked = false;
-	for (int32_t i = 0; i < container.size() && !p_item->is_empty(); i++) {
-		if (container[i].is_valid() && container[i]->can_stack_with(p_item)) {
-			container[i]->stack_with(p_item);
-			stacked = true;
-		}
-	}
-
-	return stacked;
+	// Item 现在继承 WorldObject，可以直接设置
+	Ref<WorldObject> obj = p_item;
+	return container->set_object(p_slot, obj);
 }
 
 // ============ 交互接口 ============
@@ -243,9 +191,13 @@ TypedArray<Dictionary> WorldObject::harvest(Object *p_actor) {
 	TypedArray<Dictionary> loot;
 
 	// 默认行为：将容器内容作为掉落物
-	for (const Ref<Item> &item : container) {
-		if (item.is_valid() && !item->is_empty()) {
-			loot.push_back(item->serialize());
+	if (has_container()) {
+		TypedArray<WorldObject> objects = container_get_all_objects();
+		for (int i = 0; i < objects.size(); i++) {
+			Ref<WorldObject> obj = objects[i];
+			if (obj.is_valid()) {
+				loot.push_back(obj->serialize());
+			}
 		}
 	}
 
@@ -262,20 +214,7 @@ Dictionary WorldObject::serialize() const {
 	data["position_y"] = local_position.y;
 
 	if (has_container()) {
-		data["container_capacity"] = container_capacity;
-		Array container_data;
-		for (int32_t i = 0; i < container.size(); i++) {
-			const Ref<Item> &item = container[i];
-			if (item.is_valid() && !item->is_empty()) {
-				Dictionary slot_data;
-				slot_data["slot"] = i;
-				slot_data["item"] = item->serialize();
-				container_data.push_back(slot_data);
-			}
-		}
-		if (!container_data.is_empty()) {
-			data["container"] = container_data;
-		}
+		data["container"] = container->serialize();
 	}
 
 	return data;
@@ -287,21 +226,12 @@ void WorldObject::deserialize(const Dictionary &p_data) {
 	local_position.x = p_data.get("position_x", 0);
 	local_position.y = p_data.get("position_y", 0);
 
-	if (p_data.has("container_capacity")) {
-		init_container(p_data["container_capacity"]);
+	if (p_data.has("container")) {
+		Dictionary container_data = p_data["container"];
+		int32_t capacity = container_data.get("capacity", 0);
+		int32_t depth = container_data.get("nesting_depth", 0);
 
-		if (p_data.has("container")) {
-			Array container_data = p_data["container"];
-			for (int i = 0; i < container_data.size(); i++) {
-				Dictionary slot_data = container_data[i];
-				int slot = slot_data.get("slot", -1);
-				if (slot >= 0 && slot < container_capacity && slot_data.has("item")) {
-					Ref<Item> item;
-					item.instantiate();
-					item->deserialize(slot_data["item"]);
-					container.write[slot] = item;
-				}
-			}
-		}
+		init_container(capacity, depth);
+		container->deserialize(container_data);
 	}
 }

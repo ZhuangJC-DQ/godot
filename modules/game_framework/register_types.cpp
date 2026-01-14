@@ -31,6 +31,7 @@
 #include "register_types.h"
 
 #include "character.h"
+#include "item_container.h"
 #include "game_framework.h"
 #include "item.h"
 #include "monster.h"
@@ -61,6 +62,9 @@ void initialize_game_framework_module(ModuleInitializationLevel p_level) {
 
 	// === 核心框架 ===
 	GDREGISTER_CLASS(GameFramework);
+
+	// === 容器系统 ===
+	GDREGISTER_CLASS(ItemContainer);
 
 	// === 物品系统 ===
 	GDREGISTER_CLASS(Item);

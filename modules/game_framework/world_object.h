@@ -4,7 +4,7 @@
 
 #pragma once
 
-#include "item.h"
+#include "item_container.h"
 
 #include "core/object/ref_counted.h"
 #include "core/variant/dictionary.h"
@@ -32,8 +32,7 @@ private:
 	Vector2i local_position;         // 区块内坐标
 
 	// === 容器系统 ===
-	Vector<Ref<Item>> container;     // 使用 Item 类存储物品
-	int32_t container_capacity = 0;
+	Ref<ItemContainer> container;        // 容器（可选，默认为null）
 
 protected:
 	static void _bind_methods();
@@ -56,32 +55,33 @@ public:
 	Vector2i get_local_position() const { return local_position; }
 
 	// === 容器系统 ===
-	void init_container(int32_t p_capacity);
-	int32_t get_container_capacity() const { return container_capacity; }
+	void init_container(int32_t p_capacity, int32_t p_nesting_depth = 0);
+	Ref<ItemContainer> get_container() const { return container; }
+	int32_t get_container_capacity() const;
 	int32_t get_container_used_slots() const;
 	int32_t get_container_empty_slots() const;
-	bool has_container() const { return container_capacity > 0; }
+	bool has_container() const { return container.is_valid(); }
 	bool is_container_full() const;
 	bool is_container_empty() const;
+	int32_t get_container_depth() const;
 
-	// 容器操作
-	bool container_add_item(const Ref<Item> &p_item);              // 添加物品到第一个可用槽位
-	bool container_add_item_at(int32_t p_slot, const Ref<Item> &p_item);  // 添加到指定槽位
-	Ref<Item> container_remove_item(int32_t p_slot);               // 移除并返回物品
-	Ref<Item> container_get_item(int32_t p_slot) const;            // 获取槽位物品
-	bool container_set_item(int32_t p_slot, const Ref<Item> &p_item);     // 设置槽位物品
-	void container_clear();                                         // 清空容器
+	// 容器操作 - 通用对象
+	bool container_add_object(const Ref<WorldObject> &p_object);              // 添加对象到第一个可用槽位
+	bool container_add_object_at(int32_t p_slot, const Ref<WorldObject> &p_object);  // 添加到指定槽位
+	Ref<WorldObject> container_remove_object(int32_t p_slot);                 // 移除并返回对象
+	Ref<WorldObject> container_get_object(int32_t p_slot) const;              // 获取槽位对象
+	bool container_set_object(int32_t p_slot, const Ref<WorldObject> &p_object);     // 设置槽位对象
+	void container_clear();                                                    // 清空容器
 
 	// 高级容器操作
-	int32_t container_find_item(const StringName &p_item_id) const;       // 查找物品槽位
-	int32_t container_count_item(const StringName &p_item_id) const;      // 统计物品数量
-	bool container_has_item(const StringName &p_item_id, int32_t p_quantity = 1) const;
-	int32_t container_add_items(const StringName &p_item_id, int32_t p_quantity);  // 返回剩余数量
-	int32_t container_remove_items(const StringName &p_item_id, int32_t p_quantity);  // 返回实际移除数量
-	TypedArray<Ref<Item>> container_get_all_items() const;         // 获取所有非空物品
+	int32_t container_find_object(const StringName &p_object_id) const;       // 查找对象槽位
+	TypedArray<WorldObject> container_get_all_objects() const;                 // 获取所有非空对象
 
-	// 物品堆叠
-	bool container_try_stack(const Ref<Item> &p_item);             // 尝试堆叠到现有物品
+	// === Item 兼容方法 ===
+	// 这些方法提供向后兼容，将 Item 视为 WorldObject 的特化
+	bool container_add_item(const Ref<class Item> &p_item);                    // 添加物品（兼容）
+	Ref<class Item> container_get_item(int32_t p_slot) const;                  // 获取物品（兼容）
+	bool container_set_item(int32_t p_slot, const Ref<class Item> &p_item);    // 设置物品（兼容）
 
 	// === 交互接口 ===
 	void interact(Object *p_actor);

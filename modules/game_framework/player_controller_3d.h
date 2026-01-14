@@ -54,7 +54,7 @@ private:
 	CanvasLayer *ui_layer = nullptr;     // UI层
 	PlayerHUD *player_hud = nullptr;     // 玩家HUD
 	FloatingContainerWindow *inventory_panel = nullptr;  // 背包面板
-	FloatingContainerWindow *world_object_panel = nullptr;  // WorldObject容器面板
+	HashMap<WorldObject *, FloatingContainerWindow *> open_container_windows;  // 已打开的容器窗口映射
 
 	// === 内部方法 ===
 	void _setup_mesh();
@@ -65,6 +65,7 @@ private:
 	void _process_camera(double p_delta);
 	void _update_camera_position();
 	void _handle_mouse_click(const Vector2 &p_screen_pos);  // 处理鼠标点击射线检测
+	void _on_container_window_closed(WorldObject *p_world_object);  // 容器窗口关闭回调
 
 protected:
 	static void _bind_methods();

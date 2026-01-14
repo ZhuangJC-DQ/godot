@@ -464,10 +464,19 @@ void PlayerController3D::show_world_object_container(WorldObject *p_world_object
 		return;
 	}
 
-	// 如果已经有打开的世界对象容器窗口，先关闭它
-	if (world_object_panel && world_object_panel->is_visible()) {
-		world_object_panel->queue_free();
-		world_object_panel = nullptr;
+	// 检查是否已经有该对象的容器窗口
+	if (open_container_windows.has(p_world_object)) {
+		FloatingContainerWindow *existing_window = open_container_windows[p_world_object];
+		// 如果窗口还存在且有效，将其置于前面并刷新
+		if (existing_window && existing_window->is_inside_tree()) {
+			existing_window->grab_focus();
+			existing_window->move_to_foreground();
+			existing_window->refresh();
+			return;
+		} else {
+			// 窗口已失效，从映射中移除
+			open_container_windows.erase(p_world_object);
+		}
 	}
 
 	// 创建新的浮动窗口显示世界对象的容器
@@ -476,15 +485,36 @@ void PlayerController3D::show_world_object_container(WorldObject *p_world_object
 		title = "Container";
 	}
 
-	world_object_panel = FloatingContainerWindow::create_and_show(
+	FloatingContainerWindow *window = FloatingContainerWindow::create_and_show(
 		p_world_object,
 		title,
 		ui_layer
 	);
+
+	// 将新窗口添加到映射中
+	if (window) {
+		open_container_windows[p_world_object] = window;
+
+		// 连接窗口关闭信号，以便在关闭时从映射中移除
+		window->connect("close_requested", callable_mp(this, &PlayerController3D::_on_container_window_closed).bind(p_world_object));
+	}
+}
+
+void PlayerController3D::_on_container_window_closed(WorldObject *p_world_object) {
+	if (open_container_windows.has(p_world_object)) {
+		FloatingContainerWindow *window = open_container_windows[p_world_object];
+		if (window) {
+			window->queue_free();
+		}
+		open_container_windows.erase(p_world_object);
+	}
 }
 
 void PlayerController3D::hide_world_object_container() {
-	if (world_object_panel && world_object_panel->is_visible()) {
-		world_object_panel->hide();
+	// 隐藏所有打开的容器窗口
+	for (KeyValue<WorldObject *, FloatingContainerWindow *> &kv : open_container_windows) {
+		if (kv.value && kv.value->is_inside_tree()) {
+			kv.value->hide();
+		}
 	}
 }

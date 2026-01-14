@@ -9,11 +9,12 @@
 #include "scene/3d/camera_3d.h"
 #include "scene/3d/mesh_instance_3d.h"
 #include "scene/3d/node_3d.h"
+#include "scene/main/canvas_layer.h"
 #include "scene/resources/3d/capsule_shape_3d.h"
 #include "scene/resources/mesh.h"
 
 class PlayerHUD;
-class ContainerPanel;
+class FloatingContainerWindow;
 class WorldObject;
 
 // 第三人称玩家控制器 - 博德之门风格俯视角
@@ -50,9 +51,10 @@ private:
 
 	// === UI ===
 	bool enable_hud = true;              // 是否启用HUD
+	CanvasLayer *ui_layer = nullptr;     // UI层
 	PlayerHUD *player_hud = nullptr;     // 玩家HUD
-	ContainerPanel *inventory_panel = nullptr;  // 背包面板
-	ContainerPanel *world_object_panel = nullptr;  // WorldObject容器面板
+	FloatingContainerWindow *inventory_panel = nullptr;  // 背包面板
+	FloatingContainerWindow *world_object_panel = nullptr;  // WorldObject容器面板
 
 	// === 内部方法 ===
 	void _setup_mesh();

@@ -164,6 +164,29 @@ void Chunk::generate_world_objects(RandomPCG &rng) {
 			// 随机类别
 			item->set_category(static_cast<ItemCategory>(rng.rand(6)));
 
+			// 30% 几率给物品添加容器（用于测试嵌套容器）
+			if (rng.rand(100) < 30) {
+				int item_container_size = 2 + rng.rand(4);  // 2-6 槽
+				item->init_container(item_container_size, 1);  // 深度1
+
+				// 为该物品的容器添加 1-2 个子物品
+				int sub_item_count = 1 + rng.rand(2);
+				for (int k = 0; k < sub_item_count; k++) {
+					Ref<Item> sub_item;
+					sub_item.instantiate();
+
+					int sub_idx = rng.rand(ITEM_COUNT);
+					sub_item->set_item_id(StringName(ITEM_IDS[sub_idx]));
+					sub_item->set_display_name(StringName(ITEM_IDS[sub_idx]));
+					sub_item->set_quantity(1 + rng.rand(5));
+					sub_item->set_max_stack_size(99);
+					sub_item->set_rarity(static_cast<ItemRarity>(rng.rand(5)));
+					sub_item->set_category(static_cast<ItemCategory>(rng.rand(6)));
+
+					item->container_add_item(sub_item);
+				}
+			}
+
 			// 添加到容器
 			city_obj->container_add_item(item);
 		}
@@ -384,6 +407,24 @@ void Chunk::generate_monsters(RandomPCG &rng) {
 			item->set_rarity(static_cast<ItemRarity>(rng.rand(5)));
 			item->set_category(static_cast<ItemCategory>(rng.rand(6)));
 
+			// 20% 几率给物品添加容器
+			if (rng.rand(100) < 20) {
+				int item_container_size = 2 + rng.rand(3);  // 2-5 槽
+				item->init_container(item_container_size, 1);
+
+				// 添加 1 个子物品
+				Ref<Item> sub_item;
+				sub_item.instantiate();
+				int sub_idx = rng.rand(ITEM_COUNT);
+				sub_item->set_item_id(StringName(ITEM_IDS[sub_idx]));
+				sub_item->set_display_name(StringName(ITEM_IDS[sub_idx]));
+				sub_item->set_quantity(1 + rng.rand(3));
+				sub_item->set_max_stack_size(99);
+				sub_item->set_rarity(static_cast<ItemRarity>(rng.rand(5)));
+				sub_item->set_category(static_cast<ItemCategory>(rng.rand(6)));
+				item->container_add_item(sub_item);
+			}
+
 			monster->container_add_item(item);
 		}
 
@@ -488,6 +529,27 @@ void Chunk::generate_npcs(RandomPCG &rng) {
 			// 商人物品设置价值
 			if (npc_type == NPC_TYPE_MERCHANT) {
 				item->set_base_value(10 + rng.rand(100));
+			}
+
+			// 25% 几率给物品添加容器（商人物品更容易是背包等容器物品）
+			if (rng.rand(100) < 25) {
+				int item_container_size = 3 + rng.rand(4);  // 3-7 槽
+				item->init_container(item_container_size, 1);
+
+				// 添加 1-3 个子物品
+				int sub_item_count = 1 + rng.rand(3);
+				for (int k = 0; k < sub_item_count; k++) {
+					Ref<Item> sub_item;
+					sub_item.instantiate();
+					int sub_idx = rng.rand(ITEM_COUNT);
+					sub_item->set_item_id(StringName(ITEM_IDS[sub_idx]));
+					sub_item->set_display_name(StringName(ITEM_IDS[sub_idx]));
+					sub_item->set_quantity(1 + rng.rand(10));
+					sub_item->set_max_stack_size(99);
+					sub_item->set_rarity(static_cast<ItemRarity>(rng.rand(5)));
+					sub_item->set_category(static_cast<ItemCategory>(rng.rand(6)));
+					item->container_add_item(sub_item);
+				}
 			}
 
 			npc->container_add_item(item);

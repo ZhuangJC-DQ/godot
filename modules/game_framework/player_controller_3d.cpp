@@ -5,7 +5,7 @@
 #include "player_controller_3d.h"
 
 #include "player.h"
-#include "ui/container_panel.h"
+#include "ui/floating_container_window.h"
 #include "ui/player_hud.h"
 #include "world_object.h"
 #include "world_object_node_3d.h"
@@ -320,7 +320,7 @@ void PlayerController3D::_setup_hud() {
 	}
 
 	// 创建CanvasLayer用于UI（这样UI不会受3D摄像机影响）
-	CanvasLayer *ui_layer = memnew(CanvasLayer);
+	ui_layer = memnew(CanvasLayer);
 	ui_layer->set_name("UILayer");
 	ui_layer->set_layer(10); // 确保在最上层
 	add_child(ui_layer);
@@ -342,43 +342,20 @@ void PlayerController3D::_setup_hud() {
 		ERR_PRINT("PlayerController3D: 无法加载PlayerHUD场景文件: res://ui/player_hud.tscn");
 	}
 
-	// 从场景文件加载背包面板（默认隐藏）
-	Ref<PackedScene> inventory_scene = ResourceLoader::load("res://ui/container_panel.tscn");
-	if (inventory_scene.is_valid()) {
-		inventory_panel = Object::cast_to<ContainerPanel>(inventory_scene->instantiate());
+	// 创建背包浮动窗口（默认隐藏）
+	if (player_data.is_valid()) {
+		inventory_panel = FloatingContainerWindow::create_and_show(
+			player_data.ptr(),
+			"Inventory",
+			ui_layer
+		);
 		if (inventory_panel) {
-			inventory_panel->set_name("InventoryPanel");
-			inventory_panel->set_title("Inventory");
-			inventory_panel->set_columns(5);
-			inventory_panel->set_anchors_preset(Control::PRESET_CENTER);
 			inventory_panel->hide();
-			ui_layer->add_child(inventory_panel);
-
-			// 绑定Player的容器到背包面板
-			if (player_data.is_valid()) {
-				inventory_panel->bind_container(player_data.ptr());
-			}
 		}
-	} else {
-		ERR_PRINT("PlayerController3D: 无法加载ContainerPanel场景文件: res://ui/container_panel.tscn");
 	}
 
-	// 从场景文件加载WorldObject容器面板（默认隐藏）
-	Ref<PackedScene> world_object_scene = ResourceLoader::load("res://ui/container_panel.tscn");
-	if (world_object_scene.is_valid()) {
-		world_object_panel = Object::cast_to<ContainerPanel>(world_object_scene->instantiate());
-		if (world_object_panel) {
-			world_object_panel->set_name("WorldObjectPanel");
-			world_object_panel->set_title("Container");
-			world_object_panel->set_columns(4);
-			world_object_panel->set_anchors_preset(Control::PRESET_CENTER);
-			world_object_panel->set_position(Vector2(200, 0)); // 偏移一些位置避免重叠
-			world_object_panel->hide();
-			ui_layer->add_child(world_object_panel);
-		}
-	} else {
-		ERR_PRINT("PlayerController3D: 无法加载WorldObject ContainerPanel场景文件: res://ui/container_panel.tscn");
-	}
+	// 注意：世界对象容器窗口将在用户交互时动态创建
+	// world_object_panel 保留用于存储当前打开的世界对象容器
 }
 
 void PlayerController3D::set_enable_hud(bool p_enable) {
@@ -479,7 +456,7 @@ void PlayerController3D::_handle_mouse_click(const Vector2 &p_screen_pos) {
 // === WorldObject交互 ===
 
 void PlayerController3D::show_world_object_container(WorldObject *p_world_object) {
-	if (!p_world_object || !world_object_panel) {
+	if (!p_world_object || !ui_layer) {
 		return;
 	}
 
@@ -487,15 +464,27 @@ void PlayerController3D::show_world_object_container(WorldObject *p_world_object
 		return;
 	}
 
-	// 绑定WorldObject的容器到面板
-	world_object_panel->bind_container(p_world_object);
-	world_object_panel->set_title(p_world_object->get_object_id());
-	world_object_panel->show();
-	world_object_panel->refresh();
+	// 如果已经有打开的世界对象容器窗口，先关闭它
+	if (world_object_panel && world_object_panel->is_visible()) {
+		world_object_panel->queue_free();
+		world_object_panel = nullptr;
+	}
+
+	// 创建新的浮动窗口显示世界对象的容器
+	String title = p_world_object->get_object_id();
+	if (title.is_empty()) {
+		title = "Container";
+	}
+
+	world_object_panel = FloatingContainerWindow::create_and_show(
+		p_world_object,
+		title,
+		ui_layer
+	);
 }
 
 void PlayerController3D::hide_world_object_container() {
-	if (world_object_panel) {
+	if (world_object_panel && world_object_panel->is_visible()) {
 		world_object_panel->hide();
 	}
 }

@@ -43,6 +43,7 @@
 
 // UI组件
 #include "ui/container_panel.h"
+#include "ui/floating_container_window.h"
 #include "ui/game_ui.h"
 #include "ui/item_slot.h"
 #include "ui/player_hud.h"
@@ -86,6 +87,7 @@ void initialize_game_framework_module(ModuleInitializationLevel p_level) {
 	GDREGISTER_CLASS(GameUI);
 	GDREGISTER_CLASS(ItemSlot);
 	GDREGISTER_CLASS(ContainerPanel);
+	GDREGISTER_CLASS(FloatingContainerWindow);
 	GDREGISTER_CLASS(PlayerHUD);
 
 	// 如果需要创建单例（全局访问的对象）

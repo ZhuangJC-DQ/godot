@@ -288,17 +288,61 @@ void FloatingContainerWindow::_on_slot_item_dropped(ItemSlot *from_slot, Ref<Ite
 
 	int from_index = from_slot->get_slot_index();
 
-	// 验证槽位索引
-	if (from_index < 0 || from_index >= bound_object->get_container_capacity()) {
-		return;
-	}
+	// 验证目标槽位索引
 	if (to_slot_index < 0 || to_slot_index >= bound_object->get_container_capacity()) {
 		return;
 	}
 
-	// 【关键修复】使用原子性交换操作，防止物品复制BUG
-	if (bound_object->container_swap_objects(from_index, to_slot_index)) {
-		_sync_from_container();
+	// 检查是否同一个窗口内拖拽
+	Node *from_parent = from_slot->get_parent();
+	Node *to_parent = slots[to_slot_index]->get_parent();
+
+	// 寻找源槽位所属的 FloatingContainerWindow
+	FloatingContainerWindow *from_window = nullptr;
+	Node *current = from_slot;
+	while (current) {
+		from_window = Object::cast_to<FloatingContainerWindow>(current);
+		if (from_window) {
+			break;
+		}
+		current = current->get_parent();
+	}
+
+	if (from_window && from_window == this) {
+		// 同一窗口内拖拽：交换位置
+		if (from_index >= 0 && from_index < bound_object->get_container_capacity()) {
+			if (bound_object->container_swap_objects(from_index, to_slot_index)) {
+				// 清除源槽位高亮
+				from_slot->set_slot_state(ItemSlot::STATE_NORMAL);
+				_sync_from_container();
+			}
+		}
+	} else if (from_window && from_window != this) {
+		// 跨窗口拖拽：从源容器移动到目标容器
+		WorldObject *from_container = from_window->get_bound_object();
+		if (from_container && from_index >= 0 && from_index < from_container->get_container_capacity()) {
+			// 【关键修复】先获取并保存两个物品的引用
+			Ref<WorldObject> from_item = from_container->container_get_item(from_index);
+			Ref<WorldObject> to_item = bound_object->container_get_item(to_slot_index);
+
+			// 先清空两个位置，避免引用计数问题
+			from_container->container_set_item(from_index, Ref<WorldObject>());
+			bound_object->container_set_item(to_slot_index, Ref<WorldObject>());
+
+			// 然后交换设置
+			bound_object->container_set_item(to_slot_index, from_item);
+			from_container->container_set_item(from_index, to_item);
+
+			// 清除源槽位高亮
+			from_slot->set_slot_state(ItemSlot::STATE_NORMAL);
+
+			// 刷新两个窗口
+			_sync_from_container();
+			from_window->refresh();
+		}
+	} else {
+		// 无法确定源窗口，可能是从其他地方拖过来的
+		// TODO: 处理其他来源的拖拽
 	}
 }
 

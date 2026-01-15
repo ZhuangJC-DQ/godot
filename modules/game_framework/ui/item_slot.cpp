@@ -248,6 +248,9 @@ Variant ItemSlot::get_drag_data(const Point2 &p_point) {
 	preview->set_modulate(Color(1, 1, 1, 0.7));
 	set_drag_preview(preview);
 
+	// 拖拽开始时恢复为普通状态，避免高亮残留
+	set_slot_state(STATE_NORMAL);
+
 	// 返回拖拽数据
 	Dictionary data;
 	data["type"] = "item_slot";

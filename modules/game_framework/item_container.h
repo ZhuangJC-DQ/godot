@@ -57,8 +57,13 @@ public:
 	bool add_object_at(int32_t p_slot, const Ref<WorldObject> &p_object); // 添加到指定槽位
 	Ref<WorldObject> remove_object(int32_t p_slot);                       // 移除并返回对象
 	Ref<WorldObject> get_object(int32_t p_slot) const;                    // 获取槽位对象
-	bool set_object(int32_t p_slot, const Ref<WorldObject> &p_object);    // 设置槽位对象
+	bool set_object(int32_t p_slot, const Ref<WorldObject> &p_object);    // 设置槽位对象（仅设置空槽位）
 	void clear();                                                          // 清空容器
+
+	// === 拖拽操作（原子性，防止复制BUG）===
+	bool swap_objects(int32_t p_slot_a, int32_t p_slot_b);                // 交换两个槽位的物品
+	bool move_object(int32_t p_from_slot, int32_t p_to_slot);             // 移动物品（原子性）
+	bool replace_object(int32_t p_slot, const Ref<WorldObject> &p_object); // 强制替换槽位（返回旧对象）
 
 	// === 查找操作 ===
 	int32_t find_object(const StringName &p_object_id) const;             // 查找对象槽位

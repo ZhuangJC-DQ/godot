@@ -22,6 +22,10 @@ void ItemContainer::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_object", "slot", "object"), &ItemContainer::set_object);
 	ClassDB::bind_method(D_METHOD("clear"), &ItemContainer::clear);
 
+	ClassDB::bind_method(D_METHOD("swap_objects", "slot_a", "slot_b"), &ItemContainer::swap_objects);
+	ClassDB::bind_method(D_METHOD("move_object", "from_slot", "to_slot"), &ItemContainer::move_object);
+	ClassDB::bind_method(D_METHOD("replace_object", "slot", "object"), &ItemContainer::replace_object);
+
 	ClassDB::bind_method(D_METHOD("find_object", "object_id"), &ItemContainer::find_object);
 	ClassDB::bind_method(D_METHOD("get_all_objects"), &ItemContainer::get_all_objects);
 
@@ -130,6 +134,12 @@ Ref<WorldObject> ItemContainer::get_object(int32_t p_slot) const {
 bool ItemContainer::set_object(int32_t p_slot, const Ref<WorldObject> &p_object) {
 	ERR_FAIL_INDEX_V(p_slot, capacity, false);
 
+	// 【修复】仅允许设置空槽位，防止意外覆盖
+	if (slots[p_slot].is_valid()) {
+		ERR_PRINT(vformat("Cannot set_object: slot %d is already occupied. Use replace_object or swap_objects instead.", p_slot));
+		return false;
+	}
+
 	// 如果设置非空对象，需要安全检查
 	if (p_object.is_valid() && !can_add_object(p_object)) {
 		return false;
@@ -145,6 +155,69 @@ void ItemContainer::clear() {
 			slots.write[i] = Ref<WorldObject>();
 		}
 	}
+}
+
+// ============ 拖拽操作（原子性）============
+
+bool ItemContainer::swap_objects(int32_t p_slot_a, int32_t p_slot_b) {
+	ERR_FAIL_INDEX_V(p_slot_a, capacity, false);
+	ERR_FAIL_INDEX_V(p_slot_b, capacity, false);
+
+	// 允许相同槽位（无操作）
+	if (p_slot_a == p_slot_b) {
+		return true;
+	}
+
+	Ref<WorldObject> obj_a = slots[p_slot_a];
+	Ref<WorldObject> obj_b = slots[p_slot_b];
+
+	// 如果都是空槽位，无需交换
+	if (obj_a.is_null() && obj_b.is_null()) {
+		return true;
+	}
+
+	// 【关键】原子性交换，防止复制BUG
+	slots.write[p_slot_a] = obj_b;
+	slots.write[p_slot_b] = obj_a;
+
+	return true;
+}
+
+bool ItemContainer::move_object(int32_t p_from_slot, int32_t p_to_slot) {
+	ERR_FAIL_INDEX_V(p_from_slot, capacity, false);
+	ERR_FAIL_INDEX_V(p_to_slot, capacity, false);
+
+	// 源槽位必须有物品
+	if (slots[p_from_slot].is_null()) {
+		ERR_PRINT(vformat("Cannot move: source slot %d is empty.", p_from_slot));
+		return false;
+	}
+
+	// 目标槽位必须为空
+	if (slots[p_to_slot].is_valid()) {
+		ERR_PRINT(vformat("Cannot move: target slot %d is occupied. Use swap_objects instead.", p_to_slot));
+		return false;
+	}
+
+	// 【关键】原子性移动：先获取对象，再清空源槽位，最后设置目标槽位
+	Ref<WorldObject> obj = slots[p_from_slot];
+	slots.write[p_from_slot] = Ref<WorldObject>();
+	slots.write[p_to_slot] = obj;
+
+	return true;
+}
+
+bool ItemContainer::replace_object(int32_t p_slot, const Ref<WorldObject> &p_object) {
+	ERR_FAIL_INDEX_V(p_slot, capacity, false);
+
+	// 如果设置非空对象，需要安全检查
+	if (p_object.is_valid() && !can_add_object(p_object)) {
+		return false;
+	}
+
+	// 【关键】强制替换，旧对象会被丢弃（Ref自动管理内存）
+	slots.write[p_slot] = p_object;
+	return true;
 }
 
 // ============ 查找操作 ============

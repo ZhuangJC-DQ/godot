@@ -28,6 +28,10 @@ void WorldObject::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("container_add_object", "object"), &WorldObject::container_add_object);
 	ClassDB::bind_method(D_METHOD("container_get_object", "slot"), &WorldObject::container_get_object);
 	ClassDB::bind_method(D_METHOD("container_remove_object", "slot"), &WorldObject::container_remove_object);
+	ClassDB::bind_method(D_METHOD("container_set_object", "slot", "object"), &WorldObject::container_set_object);
+	ClassDB::bind_method(D_METHOD("container_swap_objects", "slot_a", "slot_b"), &WorldObject::container_swap_objects);
+	ClassDB::bind_method(D_METHOD("container_move_object", "from_slot", "to_slot"), &WorldObject::container_move_object);
+	ClassDB::bind_method(D_METHOD("container_replace_object", "slot", "object"), &WorldObject::container_replace_object);
 
 	ClassDB::bind_method(D_METHOD("serialize"), &WorldObject::serialize);
 	ClassDB::bind_method(D_METHOD("deserialize", "data"), &WorldObject::deserialize);
@@ -147,6 +151,23 @@ TypedArray<WorldObject> WorldObject::container_get_all_objects() const {
 		return TypedArray<WorldObject>();
 	}
 	return container->get_all_objects();
+}
+
+// ============ 容器拖拽操作（原子性）============
+
+bool WorldObject::container_swap_objects(int32_t p_slot_a, int32_t p_slot_b) {
+	ERR_FAIL_COND_V_MSG(!has_container(), false, "Object has no container.");
+	return container->swap_objects(p_slot_a, p_slot_b);
+}
+
+bool WorldObject::container_move_object(int32_t p_from_slot, int32_t p_to_slot) {
+	ERR_FAIL_COND_V_MSG(!has_container(), false, "Object has no container.");
+	return container->move_object(p_from_slot, p_to_slot);
+}
+
+bool WorldObject::container_replace_object(int32_t p_slot, const Ref<WorldObject> &p_object) {
+	ERR_FAIL_COND_V_MSG(!has_container(), false, "Object has no container.");
+	return container->replace_object(p_slot, p_object);
 }
 
 // ============ Item 兼容方法 ============

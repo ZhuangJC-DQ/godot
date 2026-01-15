@@ -288,14 +288,16 @@ void FloatingContainerWindow::_on_slot_item_dropped(ItemSlot *from_slot, Ref<Ite
 
 	int from_index = from_slot->get_slot_index();
 
-	// 如果是同一个容器内的移动
-	// 交换两个槽位的物品
-	if (from_index >= 0 && from_index < bound_object->get_container_capacity()) {
-		Ref<Item> target_item = bound_object->container_get_item(to_slot_index);
+	// 验证槽位索引
+	if (from_index < 0 || from_index >= bound_object->get_container_capacity()) {
+		return;
+	}
+	if (to_slot_index < 0 || to_slot_index >= bound_object->get_container_capacity()) {
+		return;
+	}
 
-		bound_object->container_set_item(to_slot_index, item);
-		bound_object->container_set_item(from_index, target_item);
-
+	// 【关键修复】使用原子性交换操作，防止物品复制BUG
+	if (bound_object->container_swap_objects(from_index, to_slot_index)) {
 		_sync_from_container();
 	}
 }

@@ -208,6 +208,9 @@
 
 #include "modules/modules_tests.gen.h"
 
+// Game Framework Tests
+#include "modules/game_framework/tests/test_item_container.h"
+
 #include "tests/display_server_mock.h"
 #include "tests/test_macros.h"
 

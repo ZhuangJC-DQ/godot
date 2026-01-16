@@ -28,79 +28,27 @@
 /* SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.                 */
 /**************************************************************************/
 
+/**************************************************************************/
+/*  register_types.cpp                                                    */
+/**************************************************************************/
+
 #include "register_types.h"
 
-#include "character.h"
-#include "item_container.h"
-#include "game_framework.h"
-#include "item.h"
-#include "monster.h"
-#include "npc.h"
-#include "player.h"
-#include "player_controller_3d.h"
-#include "world_object.h"
-#include "world_object_node_3d.h"
-
-// UI组件
-#include "ui/container_panel.h"
-#include "ui/floating_container_window.h"
-#include "ui/game_ui.h"
-#include "ui/item_slot.h"
-#include "ui/player_hud.h"
+#include "world_manager.h"
 
 #include "core/object/class_db.h"
 
 void initialize_game_framework_module(ModuleInitializationLevel p_level) {
-	// 模块初始化级别说明：
-	// MODULE_INITIALIZATION_LEVEL_CORE - 核心系统初始化
-	// MODULE_INITIALIZATION_LEVEL_SERVERS - 服务器初始化
-	// MODULE_INITIALIZATION_LEVEL_SCENE - 场景系统初始化
-	// MODULE_INITIALIZATION_LEVEL_EDITOR - 编辑器初始化
-
 	if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
 		return;
 	}
 
-	// === 核心框架 ===
-	GDREGISTER_CLASS(GameFramework);
-
-	// === 容器系统 ===
-	GDREGISTER_CLASS(ItemContainer);
-
-	// === 物品系统 ===
-	GDREGISTER_CLASS(Item);
-
-	// === 世界物体系统 ===
-	GDREGISTER_CLASS(WorldObject);
-	GDREGISTER_CLASS(WorldObjectNode3D);
-
-	// === 角色系统（注意继承顺序：基类先注册）===
-	GDREGISTER_CLASS(Character);
-	GDREGISTER_CLASS(Player);
-	GDREGISTER_CLASS(NPC);
-	GDREGISTER_CLASS(Monster);
-
-	// === 3D 控制器 ===
-	GDREGISTER_CLASS(PlayerController3D);
-
-	// === UI组件 ===
-	GDREGISTER_CLASS(GameUI);
-	GDREGISTER_CLASS(ItemSlot);
-	GDREGISTER_CLASS(ContainerPanel);
-	GDREGISTER_CLASS(FloatingContainerWindow);
-	GDREGISTER_CLASS(PlayerHUD);
-
-	// 如果需要创建单例（全局访问的对象）
-	// GameFramework *game_framework = memnew(GameFramework);
-	// Engine::get_singleton()->add_singleton(Engine::Singleton("GameFramework", GameFramework::get_singleton()));
+	// 只注册 WorldManager - 纯数据管理器
+	GDREGISTER_CLASS(WorldManager);
 }
 
 void uninitialize_game_framework_module(ModuleInitializationLevel p_level) {
 	if (p_level != MODULE_INITIALIZATION_LEVEL_SCENE) {
 		return;
 	}
-
-	// 清理资源
-	// 如果创建了单例，需要在这里删除
-	// memdelete(GameFramework::get_singleton());
 }

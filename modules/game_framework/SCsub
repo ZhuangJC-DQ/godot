@@ -7,8 +7,17 @@ Import("env_modules")
 # 克隆环境，避免影响其他模块
 env_game = env_modules.Clone()
 
-# 添加源文件到编译列表
-env_game.add_source_files(env.modules_sources, "*.cpp")
+# 只添加核心数据层文件
+module_obj = []
 
-# UI子目录
-env_game.add_source_files(env.modules_sources, "ui/*.cpp")
+# WorldManager - 管理接口
+module_obj.append(env_game.Object("world_manager.cpp"))
+
+# World 和 Chunk - 纯地形数据管理
+module_obj.append(env_game.Object("world.cpp"))
+module_obj.append(env_game.Object("chunk.cpp"))
+
+# 模块注册
+module_obj.append(env_game.Object("register_types.cpp"))
+
+env.modules_sources += module_obj

@@ -17,6 +17,10 @@ module_obj.append(env_game.Object("world_manager.cpp"))
 module_obj.append(env_game.Object("world.cpp"))
 module_obj.append(env_game.Object("chunk.cpp"))
 
+# ItemManager - 物品系统
+module_obj.append(env_game.Object("item/item.cpp"))
+module_obj.append(env_game.Object("item/item_manager.cpp"))
+
 # 模块注册
 module_obj.append(env_game.Object("register_types.cpp"))
 

@@ -1,0 +1,21 @@
+[gd_scene load_steps=4 format=3 uid="uid://cbj7xy8g4qx0k"]
+
+[ext_resource type="Script" path="res://chest.gd" id="1_chest_script"]
+
+[sub_resource type="BoxMesh" id="BoxMesh_chest"]
+size = Vector3(1, 0.8, 0.8)
+
+[sub_resource type="BoxShape3D" id="BoxShape3D_area"]
+size = Vector3(2, 2, 2)
+
+[node name="Chest" type="Node3D"]
+script = ExtResource("1_chest_script")
+chest_size = 10
+
+[node name="MeshInstance3D" type="MeshInstance3D" parent="."]
+mesh = SubResource("BoxMesh_chest")
+
+[node name="Area3D" type="Area3D" parent="."]
+
+[node name="CollisionShape3D" type="CollisionShape3D" parent="Area3D"]
+shape = SubResource("BoxShape3D_area")

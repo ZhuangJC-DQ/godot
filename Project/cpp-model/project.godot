@@ -15,6 +15,10 @@ run/main_scene="res://main.tscn"
 config/features=PackedStringArray("4.6", "Forward Plus")
 config/icon="res://icon.svg"
 
+[autoload]
+
+ItemManagerSingleton="*res://autoload/item_manager_singleton.gd"
+
 [physics]
 
 3d/physics_engine="Jolt Physics"

@@ -35,6 +35,7 @@
 #include "register_types.h"
 
 #include "world_manager.h"
+#include "item/item_manager.h"
 
 #include "core/object/class_db.h"
 
@@ -43,8 +44,9 @@ void initialize_game_framework_module(ModuleInitializationLevel p_level) {
 		return;
 	}
 
-	// 只注册 WorldManager - 纯数据管理器
+	// 注册管理器类
 	GDREGISTER_CLASS(WorldManager);
+	GDREGISTER_CLASS(ItemManager);
 }
 
 void uninitialize_game_framework_module(ModuleInitializationLevel p_level) {

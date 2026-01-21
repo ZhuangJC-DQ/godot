@@ -1,7 +1,8 @@
-[gd_scene load_steps=5 format=3 uid="uid://c8yqk2mxv1r3t"]
+[gd_scene format=3 uid="uid://c8yqk2mxv1r3t"]
 
-[ext_resource type="Texture2D" path="res://Back.png" id="1_background"]
-[ext_resource type="Script" path="res://map_visualizer.gd" id="2_script"]
+[ext_resource type="Texture2D" uid="uid://ddyctmqx6iy8q" path="res://Back.png" id="1_background"]
+[ext_resource type="Script" uid="uid://bqw25r807mqwr" path="res://map_visualizer.gd" id="2_script"]
+[ext_resource type="Script" uid="uid://b085buulu23f4" path="res://test_items.gd" id="3_h2yge"]
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_1"]
 panorama = ExtResource("1_background")
@@ -17,7 +18,7 @@ ambient_light_color = Color(1, 1, 1, 1)
 
 [node name="Main" type="Node3D" unique_id=1256079051]
 
-[node name="WorldManager" type="WorldManager" parent="."]
+[node name="WorldManager" type="WorldManager" parent="." unique_id=1930678604]
 
 [node name="WorldEnvironment" type="WorldEnvironment" parent="." unique_id=1331545057]
 environment = SubResource("Environment_world")
@@ -27,8 +28,11 @@ transform = Transform3D(0.866025, -0.353553, 0.353553, 0, 0.707107, 0.707107, -0
 light_energy = 1.2
 shadow_enabled = true
 
-[node name="Camera3D" type="Camera3D" parent="."]
+[node name="Camera3D" type="Camera3D" parent="." unique_id=591441360]
 transform = Transform3D(1, 0, 0, 0, 0.707107, 0.707107, 0, -0.707107, 0.707107, 0, 50, 50)
 
-[node name="MapVisualizer" type="Node3D" parent="."]
+[node name="MapVisualizer" type="Node3D" parent="." unique_id=2090472933]
 script = ExtResource("2_script")
+
+[node name="ItemTest" type="Node3D" parent="." unique_id=111036111]
+script = ExtResource("3_h2yge")

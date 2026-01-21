@@ -21,6 +21,7 @@ void WorldManager::_bind_methods() {
 Dictionary WorldManager::get_chunk_data(int32_t chunk_x, int32_t chunk_y) {
 	Dictionary data;
 	Chunk *chunk = world.get_chunk(chunk_x, chunk_y);
+	world.print_chunk(chunk_x, chunk_y, CHUNK_SIZE);
 	if (!chunk) {
 		return data;
 	}

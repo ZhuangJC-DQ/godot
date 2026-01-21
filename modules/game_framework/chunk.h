@@ -9,12 +9,12 @@
 
 // 地块类型
 enum TileType {
-	TILE_CITY,      // 城市中心
-	TILE_TOWN,      // 城镇
-	TILE_VILLAGE,   // 村庄
+	TILE_CITY, // 城市中心
+	TILE_TOWN, // 城镇
+	TILE_VILLAGE, // 村庄
 	TILE_GRASSLAND, // 草原
-	TILE_FOREST,    // 树林
-	TILE_MOUNTAIN,  // 山地
+	TILE_FOREST, // 树林
+	TILE_MOUNTAIN, // 山地
 };
 
 // 区块常量
@@ -37,13 +37,11 @@ struct ChunkCoord {
 	}
 };
 
-// 区块数据 - 只负责地形生成
+// 区块数据 - 使用柏林噪声生成地形
 class Chunk {
 public:
 	ChunkCoord coord;
 	TileType tiles[CHUNK_SIZE][CHUNK_SIZE];
-	int center_x;
-	int center_y;
 
 	Chunk(const ChunkCoord &p_coord);
 	void generate();

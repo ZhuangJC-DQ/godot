@@ -40,7 +40,7 @@ func visualize_chunk(chunk_x: int, chunk_y: int):
 	
 	# 打印 chunk 基本信息
 	print("Chunk Coordinates: (%d, %d)" % [chunk_data["coord_x"], chunk_data["coord_y"]])
-	print("Center Position: (%d, %d)" % [chunk_data["center_x"], chunk_data["center_y"]])
+	print("Terrain Generated: Perlin Noise")
 	
 	# 统计地形类型分布
 	var tile_type_counts = {}

@@ -26,6 +26,6 @@ public:
 	int get_tile_type(int32_t chunk_x, int32_t chunk_y, int32_t tile_x, int32_t tile_y);
 
 	// C++ 内部访问
-	World* get_world() { return &world; }
-	Chunk* get_chunk_ptr(int32_t x, int32_t y) { return world.get_chunk(x, y); }
+	World *get_world() { return &world; }
+	Chunk *get_chunk_ptr(int32_t x, int32_t y) { return world.get_chunk(x, y); }
 };

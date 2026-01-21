@@ -6,49 +6,55 @@
 
 #include "core/string/print_string.h"
 #include "core/variant/variant.h"
-#include <cmath>
+#include "thirdparty/misc/FastNoiseLite.h"
 
 Chunk::Chunk(const ChunkCoord &p_coord) :
-		coord(p_coord), center_x(0), center_y(0) {
+		coord(p_coord) {
 	generate();
 }
 
 void Chunk::generate() {
-	RandomPCG rng(coord.to_seed());
+	// 创建 FastNoiseLite 实例
+	fastnoiselite::FastNoiseLite noise;
 
-	// 生成随机中心点
-	center_x = rng.rand(CHUNK_SIZE);
-	center_y = rng.rand(CHUNK_SIZE);
+	// 配置噪声参数
+	noise.SetSeed(coord.to_seed());
+	noise.SetNoiseType(fastnoiselite::FastNoiseLite::NoiseType_Perlin);
+	noise.SetFrequency(0.01f); // 控制地形尺度，值越小地形越平缓
 
-	// 计算最大可能距离（用于归一化）
-	float max_dist = std::sqrt((float)(CHUNK_SIZE * CHUNK_SIZE + CHUNK_SIZE * CHUNK_SIZE));
+	// 配置分形参数（多层噪声叠加）
+	noise.SetFractalType(fastnoiselite::FastNoiseLite::FractalType_FBm);
+	noise.SetFractalOctaves(4); // 叠加层数
+	noise.SetFractalLacunarity(2.0f); // 频率倍数
+	noise.SetFractalGain(0.5f); // 振幅衰减
 
-	// 遍历每个格子生成地形
+	// 生成地形
 	for (int y = 0; y < CHUNK_SIZE; y++) {
 		for (int x = 0; x < CHUNK_SIZE; x++) {
-			int dx = x - center_x;
-			int dy = y - center_y;
-			float dist = std::sqrt((float)(dx * dx + dy * dy));
-			float normalized_dist = dist / max_dist;
+			// 计算世界坐标（确保跨区块连续）
+			float world_x = coord.x * CHUNK_SIZE + x;
+			float world_y = coord.y * CHUNK_SIZE + y;
 
-			// 随机扰动
-			float noise = rng.randf() * 0.15f;
-			normalized_dist += noise;
+			// 获取噪声值 [-1.0, 1.0]
+			float noise_value = noise.GetNoise(world_x, world_y);
 
-			// 根据距离决定地形类型
+			// 归一化到 [0.0, 1.0]
+			float normalized = (noise_value + 1.0f) * 0.5f;
+
+			// 根据噪声值分配地形类型（用于颜色区分）
 			TileType type;
-			if (normalized_dist < 0.08f) {
-				type = TILE_CITY;
-			} else if (normalized_dist < 0.15f) {
-				type = TILE_TOWN;
-			} else if (normalized_dist < 0.25f) {
-				type = TILE_VILLAGE;
-			} else if (normalized_dist < 0.45f) {
-				type = TILE_GRASSLAND;
-			} else if (normalized_dist < 0.70f) {
-				type = TILE_FOREST;
+			if (normalized < 0.15f) {
+				type = TILE_MOUNTAIN; // 深色区域
+			} else if (normalized < 0.35f) {
+				type = TILE_FOREST; // 中深色区域
+			} else if (normalized < 0.60f) {
+				type = TILE_GRASSLAND; // 中等区域
+			} else if (normalized < 0.75f) {
+				type = TILE_VILLAGE; // 中浅色区域
+			} else if (normalized < 0.90f) {
+				type = TILE_TOWN; // 浅色区域
 			} else {
-				type = TILE_MOUNTAIN;
+				type = TILE_CITY; // 最浅色区域
 			}
 
 			tiles[y][x] = type;
@@ -58,7 +64,7 @@ void Chunk::generate() {
 
 String Chunk::to_string(int preview_size) const {
 	String result;
-	result += vformat("Chunk (%d, %d) - Center: (%d, %d)\n", coord.x, coord.y, center_x, center_y);
+	result += vformat("Chunk (%d, %d) - Perlin Noise Terrain\n", coord.x, coord.y);
 
 	// 限制预览大小
 	int size = MIN(preview_size, CHUNK_SIZE);

@@ -7,16 +7,6 @@
 #include "core/math/random_pcg.h"
 #include "core/string/ustring.h"
 
-// 地块类型
-enum TileType {
-	TILE_CITY, // 城市中心
-	TILE_TOWN, // 城镇
-	TILE_VILLAGE, // 村庄
-	TILE_GRASSLAND, // 草原
-	TILE_FOREST, // 树林
-	TILE_MOUNTAIN, // 山地
-};
-
 // 区块常量
 constexpr int CHUNK_SIZE = 256;
 
@@ -37,11 +27,11 @@ struct ChunkCoord {
 	}
 };
 
-// 区块数据 - 使用柏林噪声生成地形
+// 区块数据 - 使用柏林噪声生成高度图
 class Chunk {
 public:
 	ChunkCoord coord;
-	TileType tiles[CHUNK_SIZE][CHUNK_SIZE];
+	float tiles[CHUNK_SIZE][CHUNK_SIZE]; // 存储归一化高度值 [0.0, 1.0]
 
 	Chunk(const ChunkCoord &p_coord);
 	void generate();

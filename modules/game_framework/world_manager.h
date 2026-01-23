@@ -23,7 +23,7 @@ public:
 
 	// 数据查询接口
 	Dictionary get_chunk_data(int32_t chunk_x, int32_t chunk_y);
-	int get_tile_type(int32_t chunk_x, int32_t chunk_y, int32_t tile_x, int32_t tile_y);
+	float get_tile_height(int32_t chunk_x, int32_t chunk_y, int32_t tile_x, int32_t tile_y);
 
 	// C++ 内部访问
 	World *get_world() { return &world; }

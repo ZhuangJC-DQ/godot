@@ -15,7 +15,7 @@ WorldManager::~WorldManager() {
 
 void WorldManager::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_chunk_data", "chunk_x", "chunk_y"), &WorldManager::get_chunk_data);
-	ClassDB::bind_method(D_METHOD("get_tile_type", "chunk_x", "chunk_y", "tile_x", "tile_y"), &WorldManager::get_tile_type);
+	ClassDB::bind_method(D_METHOD("get_tile_height", "chunk_x", "chunk_y", "tile_x", "tile_y"), &WorldManager::get_tile_height);
 }
 
 Dictionary WorldManager::get_chunk_data(int32_t chunk_x, int32_t chunk_y) {
@@ -32,11 +32,11 @@ Dictionary WorldManager::get_chunk_data(int32_t chunk_x, int32_t chunk_y) {
 	return data;
 }
 
-int WorldManager::get_tile_type(int32_t chunk_x, int32_t chunk_y, int32_t tile_x, int32_t tile_y) {
-	Chunk *chunk = world.get_chunk(chunk_x, chunk_y);
+float WorldManager::get_tile_height(int32_t chunk_x, int32_t chunk_y, int32_t tile_x, int32_t tile_y) {
+	Chunk* chunk = world.get_chunk(chunk_x, chunk_y);
 	if (!chunk || tile_x < 0 || tile_x >= CHUNK_SIZE || tile_y < 0 || tile_y >= CHUNK_SIZE) {
-		return -1;
+		return -1.0f;
 	}
 
-	return static_cast<int>(chunk->tiles[tile_y][tile_x]);
+	return chunk->tiles[tile_y][tile_x];
 }

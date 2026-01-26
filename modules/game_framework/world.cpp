@@ -41,7 +41,6 @@ void World::clear() {
 			kv.value = nullptr;
 		}
 	}
-	// 清空HashMap并重置容量，避免内存碎片
+	// 清空HashMap
 	chunks.clear();
-	chunks.reset();
 }

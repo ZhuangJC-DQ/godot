@@ -1,32 +1,64 @@
+@tool
 extends Node3D
 
 const CHUNK_SIZE = 256
 const TILE_SIZE = 1.0
 
+@export var chunk_x: int = 0:
+	set(value):
+		chunk_x = value
+		if Engine.is_editor_hint():
+			_update_visualization()
+
+@export var chunk_y: int = 0:
+	set(value):
+		chunk_y = value
+		if Engine.is_editor_hint():
+			_update_visualization()
+
+@export var height_scale: float = 50.0:
+	set(value):
+		height_scale = value
+		if Engine.is_editor_hint():
+			_update_visualization()
+
+@export var regenerate: bool = false:
+	set(value):
+		if value and Engine.is_editor_hint():
+			_update_visualization()
+		regenerate = false
+
 var world_manager: WorldManager
 
-# 地形颜色映射
-var tile_colors = {
-	0: Color(0.3, 0.7, 0.3),  # TILE_GRASSLAND - 绿色
-	1: Color(0.1, 0.4, 0.1),  # TILE_FOREST - 深绿色
-	2: Color(0.5, 0.5, 0.5),  # TILE_MOUNTAIN - 深灰色
-	3: Color(0.8, 0.8, 0.8),  # TILE_CITY - 灰色
-	4: Color(0.6, 0.5, 0.4),  # TILE_TOWN - 棕色
-	5: Color(0.9, 0.8, 0.6),  # TILE_VILLAGE - 浅黄色
-}
-
 func _ready():
-	# 获取 WorldManager 节点
-	world_manager = get_node("../WorldManager")
-	
-	if world_manager == null:
-		push_error("WorldManager not found!")
+	if not Engine.is_editor_hint():
+		# 运行时模式
+		world_manager = get_node("../WorldManager")
+		if world_manager == null:
+			push_error("WorldManager not found!")
+			return
+		print("=== MapVisualizer Started ===")
+		visualize_chunk(chunk_x, chunk_y)
+	else:
+		# 编辑器模式
+		_update_visualization()
+
+func _update_visualization():
+	if not is_inside_tree():
 		return
 	
-	print("=== MapVisualizer Started ===")
+	# 清除旧的可视化
+	for child in get_children():
+		child.queue_free()
 	
-	# 获取并打印 chunk (0, 0) 的数据
-	visualize_chunk(0, 0)
+	# 获取或创建 WorldManager
+	world_manager = get_node_or_null("../WorldManager")
+	if world_manager == null:
+		print("WorldManager not found in editor mode")
+		return
+	
+	print("=== Editor Visualization: Chunk (%d, %d) ===" % [chunk_x, chunk_y])
+	visualize_chunk(chunk_x, chunk_y)
 
 func visualize_chunk(chunk_x: int, chunk_y: int):
 	print("\n========== CHUNK (%d, %d) DATA ==========\n" % [chunk_x, chunk_y])
@@ -81,7 +113,7 @@ func visualize_chunk(chunk_x: int, chunk_y: int):
 	print("\n========== END CHUNK DATA ==========\n")
 
 func create_terrain_mesh(chunk_x: int, chunk_y: int):
-	print("\n--- Creating Height Map Visualization ---\n")
+	print("\n--- Creating 3D Height Map Terrain ---\n")
 	
 	# 降采样以提升性能
 	var sample_step = 4
@@ -93,6 +125,7 @@ func create_terrain_mesh(chunk_x: int, chunk_y: int):
 	
 	var vertices = PackedVector3Array()
 	var colors = PackedColorArray()
+	var normals = PackedVector3Array()
 	var uvs = PackedVector2Array()
 	var indices = PackedInt32Array()
 	
@@ -103,16 +136,23 @@ func create_terrain_mesh(chunk_x: int, chunk_y: int):
 			var tile_x = x * sample_step
 			var tile_y = y * sample_step
 			
-			# 获取高度值并转换为灰度颜色
+			# 获取高度值
 			var height = world_manager.get_tile_height(chunk_x, chunk_y, tile_x, tile_y)
 			if height < 0:
 				height = 0.5
-			var color = Color(height, height, height)
 			
-			# 添加顶点
-			var pos = Vector3(x * TILE_SIZE * sample_step, 0, y * TILE_SIZE * sample_step)
+			# 使用高度值生成3D地形（Y轴为高度）
+			var pos = Vector3(
+				x * TILE_SIZE * sample_step,
+				height * height_scale,  # 应用高度缩放
+				y * TILE_SIZE * sample_step
+			)
 			vertices.append(pos)
+			
+			# 根据高度生成颜色渐变（可选：也可以用其他配色方案）
+			var color = _get_height_color(height)
 			colors.append(color)
+			
 			uvs.append(Vector2(float(x) / sampled_size, float(y) / sampled_size))
 	
 	# 生成三角形索引
@@ -130,8 +170,12 @@ func create_terrain_mesh(chunk_x: int, chunk_y: int):
 			indices.append(i + sampled_size)
 			indices.append(i + sampled_size + 1)
 	
+	# 计算法线
+	normals = _calculate_normals(vertices, indices, sampled_size)
+	
 	# 设置数组
 	arrays[Mesh.ARRAY_VERTEX] = vertices
+	arrays[Mesh.ARRAY_NORMAL] = normals
 	arrays[Mesh.ARRAY_COLOR] = colors
 	arrays[Mesh.ARRAY_TEX_UV] = uvs
 	arrays[Mesh.ARRAY_INDEX] = indices
@@ -143,7 +187,8 @@ func create_terrain_mesh(chunk_x: int, chunk_y: int):
 	# 创建材质
 	var material = StandardMaterial3D.new()
 	material.vertex_color_use_as_albedo = true
-	material.shading_mode = BaseMaterial3D.SHADING_MODE_UNSHADED
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED  # 双面显示
 	
 	# 创建 MeshInstance3D
 	var mesh_instance = MeshInstance3D.new()
@@ -155,5 +200,52 @@ func create_terrain_mesh(chunk_x: int, chunk_y: int):
 	if Engine.is_editor_hint():
 		mesh_instance.owner = get_tree().edited_scene_root
 	
-	print("Created height map visualization with %d vertices" % vertices.size())
-	print("Height values displayed as grayscale (0.0=black, 1.0=white)")
+	print("Created 3D terrain with %d vertices" % vertices.size())
+	print("Height scale: %.1f units" % height_scale)
+
+# 根据高度生成颜色
+func _get_height_color(height: float) -> Color:
+	# 可以自定义配色方案，这里使用地形色
+	if height < 0.2:
+		return Color(0.1, 0.3, 0.6)  # 深蓝（水）
+	elif height < 0.4:
+		return Color(0.8, 0.7, 0.4)  # 沙滩
+	elif height < 0.6:
+		return Color(0.3, 0.7, 0.3)  # 草地
+	elif height < 0.8:
+		return Color(0.2, 0.5, 0.2)  # 森林
+	else:
+		return Color(0.9, 0.9, 0.9)  # 雪山
+	
+# 计算顶点法线
+func _calculate_normals(vertices: PackedVector3Array, indices: PackedInt32Array, grid_size: int) -> PackedVector3Array:
+	var normals = PackedVector3Array()
+	normals.resize(vertices.size())
+	
+	# 初始化法线为零
+	for i in range(vertices.size()):
+		normals[i] = Vector3.ZERO
+	
+	# 计算每个三角形的法线并累加到顶点
+	for i in range(0, indices.size(), 3):
+		var i0 = indices[i]
+		var i1 = indices[i + 1]
+		var i2 = indices[i + 2]
+		
+		var v0 = vertices[i0]
+		var v1 = vertices[i1]
+		var v2 = vertices[i2]
+		
+		var edge1 = v1 - v0
+		var edge2 = v2 - v0
+		var face_normal = edge1.cross(edge2).normalized()
+		
+		normals[i0] += face_normal
+		normals[i1] += face_normal
+		normals[i2] += face_normal
+	
+	# 归一化所有法线
+	for i in range(normals.size()):
+		normals[i] = normals[i].normalized()
+	
+	return normals

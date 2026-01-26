@@ -4,18 +4,26 @@ extends Node3D
 const CHUNK_SIZE = 256
 const TILE_SIZE = 1.0
 
-@export var chunk_x: int = 0:
+@export_group("Chunk Grid")
+@export var start_chunk_x: int = 0:
 	set(value):
-		chunk_x = value
+		start_chunk_x = value
 		if Engine.is_editor_hint():
 			_update_visualization()
 
-@export var chunk_y: int = 0:
+@export var start_chunk_y: int = 0:
 	set(value):
-		chunk_y = value
+		start_chunk_y = value
 		if Engine.is_editor_hint():
 			_update_visualization()
 
+@export var chunk_grid_size: int = 2:
+	set(value):
+		chunk_grid_size = max(1, value)
+		if Engine.is_editor_hint():
+			_update_visualization()
+
+@export_group("Visualization")
 @export var height_scale: float = 50.0:
 	set(value):
 		height_scale = value
@@ -28,6 +36,25 @@ const TILE_SIZE = 1.0
 			_update_visualization()
 		regenerate = false
 
+@export_group("Terrain Generation")
+@export var seed: int = 1337
+
+@export_range(0.001, 0.1, 0.001) var noise_frequency: float = 0.005
+
+@export_range(1, 8, 1) var noise_octaves: int = 3
+
+@export_range(1.0, 4.0, 0.1) var noise_lacunarity: float = 2.0
+
+@export_range(0.1, 1.0, 0.05) var noise_gain: float = 0.4
+
+@export var use_terrain_curve: bool = true
+
+@export var apply_terrain_params: bool = false:
+	set(value):
+		if value:
+			_apply_terrain_params()
+		apply_terrain_params = false
+
 var world_manager: WorldManager
 
 func _ready():
@@ -37,19 +64,50 @@ func _ready():
 		if world_manager == null:
 			push_error("WorldManager not found!")
 			return
+		_apply_terrain_params()
 		print("=== MapVisualizer Started ===")
-		visualize_chunk(chunk_x, chunk_y)
+		_visualize_all_chunks()
 	else:
-		# 编辑器模式
+		# 编辑器模式 - 初始化但不自动应用参数
+		world_manager = get_node_or_null("../WorldManager")
+		if world_manager:
+			_apply_terrain_params()
+
+func _apply_terrain_params():
+	if not is_inside_tree():
+		return
+	
+	world_manager = get_node_or_null("../WorldManager")
+	if world_manager == null:
+		return
+	
+	print("\n=== Applying Terrain Parameters ===")
+	var time_start = Time.get_ticks_msec()
+	
+	# 使用批量更新方法，只清除一次chunks
+	world_manager.update_all_params(seed, noise_frequency, noise_octaves, 
+									noise_lacunarity, noise_gain, use_terrain_curve)
+	
+	var time_end = Time.get_ticks_msec()
+	print("⏱ Parameters applied and chunks cleared in %d ms" % (time_end - time_start))
+	
+	# 在编辑器模式下更新可视化
+	if Engine.is_editor_hint():
 		_update_visualization()
 
 func _update_visualization():
 	if not is_inside_tree():
 		return
 	
-	# 清除旧的可视化
+	var clear_start = Time.get_ticks_msec()
+	# 清除旧的可视化 - 立即删除而不是延迟
 	for child in get_children():
+		remove_child(child)
 		child.queue_free()
+	# 强制处理延迟删除队列
+	await get_tree().process_frame
+	var clear_end = Time.get_ticks_msec()
+	print("⏱ Cleared old visualization in %d ms" % (clear_end - clear_start))
 	
 	# 获取或创建 WorldManager
 	world_manager = get_node_or_null("../WorldManager")
@@ -57,14 +115,29 @@ func _update_visualization():
 		print("WorldManager not found in editor mode")
 		return
 	
-	print("=== Editor Visualization: Chunk (%d, %d) ===" % [chunk_x, chunk_y])
-	visualize_chunk(chunk_x, chunk_y)
+	print("=== Editor Visualization: %dx%d Chunks starting from (%d, %d) ===" % [chunk_grid_size, chunk_grid_size, start_chunk_x, start_chunk_y])
+	_visualize_all_chunks()
+
+func _visualize_all_chunks():
+	var total_start = Time.get_ticks_msec()
+	# 生成chunk网格
+	for cy in range(chunk_grid_size):
+		for cx in range(chunk_grid_size):
+			var chunk_x = start_chunk_x + cx
+			var chunk_y = start_chunk_y + cy
+			visualize_chunk(chunk_x, chunk_y)
+	var total_end = Time.get_ticks_msec()
+	print("\n⏱⏱⏱ TOTAL ALL CHUNKS TIME: %d ms ⏱⏱⏱\n" % (total_end - total_start))
 
 func visualize_chunk(chunk_x: int, chunk_y: int):
+	var time_start = Time.get_ticks_msec()
 	print("\n========== CHUNK (%d, %d) DATA ==========\n" % [chunk_x, chunk_y])
 	
 	# 获取 chunk 数据
+	var time_before_get = Time.get_ticks_msec()
 	var chunk_data = world_manager.get_chunk_data(chunk_x, chunk_y)
+	var time_after_get = Time.get_ticks_msec()
+	print("⏱ Chunk generation time: %d ms" % (time_after_get - time_before_get))
 	
 	if chunk_data.is_empty():
 		print("Chunk (%d, %d) not found or empty!" % [chunk_x, chunk_y])
@@ -74,15 +147,14 @@ func visualize_chunk(chunk_x: int, chunk_y: int):
 	print("Chunk Coordinates: (%d, %d)" % [chunk_data["coord_x"], chunk_data["coord_y"]])
 	print("Terrain Generated: Perlin Noise")
 	
-	# 统计高度分布
+	# 统计高度分布（简化采样以加速）
 	var height_min = 1.0
 	var height_max = 0.0
 	var height_sum = 0.0
 	
-	# 采样高度数据
-	var sample_step = 32
+	# 采样高度数据 - 增大步长减少采样
+	var sample_step = 64  # 从32增加到64
 	var sample_count = 0
-	print("\n--- Height Map Sample (every %d tiles) ---\n" % sample_step)
 	
 	for y in range(0, CHUNK_SIZE, sample_step):
 		for x in range(0, CHUNK_SIZE, sample_step):
@@ -93,10 +165,6 @@ func visualize_chunk(chunk_x: int, chunk_y: int):
 				height_max = max(height_max, height)
 				height_sum += height
 				sample_count += 1
-			
-				# 打印采样点
-				if x % 64 == 0 and y % 64 == 0:
-					print("  Tile (%d, %d): Height %.3f" % [x, y, height])
 	
 	# 打印高度统计
 	print("\n--- Height Map Statistics ---\n")
@@ -108,16 +176,23 @@ func visualize_chunk(chunk_x: int, chunk_y: int):
 		print("  Samples: %d" % sample_count)
 	
 	# 创建可视化网格
+	var time_before_mesh = Time.get_ticks_msec()
 	create_terrain_mesh(chunk_x, chunk_y)
+	var time_after_mesh = Time.get_ticks_msec()
+	print("⏱ Mesh creation time: %d ms" % (time_after_mesh - time_before_mesh))
 	
+	var time_end = Time.get_ticks_msec()
+	print("⏱ Total chunk visualization time: %d ms" % (time_end - time_start))
 	print("\n========== END CHUNK DATA ==========\n")
 
 func create_terrain_mesh(chunk_x: int, chunk_y: int):
-	print("\n--- Creating 3D Height Map Terrain ---\n")
-	
-	# 降采样以提升性能
-	var sample_step = 4
+	# 降采样以提升性能 - 可以动态调整
+	var sample_step = 8  # 从4增加到8，减少75%的顶点数
 	var sampled_size = CHUNK_SIZE / sample_step
+	
+	# 计算chunk在世界空间中的起始坐标
+	var chunk_world_x = chunk_x * CHUNK_SIZE * TILE_SIZE
+	var chunk_world_z = chunk_y * CHUNK_SIZE * TILE_SIZE
 	
 	# 创建自定义网格
 	var arrays = []
@@ -143,9 +218,9 @@ func create_terrain_mesh(chunk_x: int, chunk_y: int):
 			
 			# 使用高度值生成3D地形（Y轴为高度）
 			var pos = Vector3(
-				x * TILE_SIZE * sample_step,
+				chunk_world_x + tile_x * TILE_SIZE,
 				height * height_scale,  # 应用高度缩放
-				y * TILE_SIZE * sample_step
+				chunk_world_z + tile_y * TILE_SIZE
 			)
 			vertices.append(pos)
 			
@@ -199,11 +274,7 @@ func create_terrain_mesh(chunk_x: int, chunk_y: int):
 	add_child(mesh_instance)
 	if Engine.is_editor_hint():
 		mesh_instance.owner = get_tree().edited_scene_root
-	
-	print("Created 3D terrain with %d vertices" % vertices.size())
-	print("Height scale: %.1f units" % height_scale)
 
-# 根据高度生成颜色
 func _get_height_color(height: float) -> Color:
 	# 可以自定义配色方案，这里使用地形色
 	if height < 0.2:

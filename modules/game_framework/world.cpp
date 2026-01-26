@@ -7,7 +7,8 @@
 #include "core/string/print_string.h"
 #include "core/variant/variant.h"
 
-World::World() {
+World::World() :
+		seed(1337) {
 }
 
 World::~World() {
@@ -22,7 +23,7 @@ Chunk *World::get_chunk(int32_t x, int32_t y) {
 		return chunks[key];
 	}
 
-	Chunk *chunk = new Chunk(coord);
+	Chunk *chunk = new Chunk(coord, seed, noise_config);
 	chunks[key] = chunk;
 	return chunk;
 }
@@ -33,8 +34,14 @@ void World::print_chunk(int32_t x, int32_t y, int preview_size) {
 }
 
 void World::clear() {
+	// 删除所有chunk对象
 	for (KeyValue<uint64_t, Chunk *> &kv : chunks) {
-		delete kv.value;
+		if (kv.value) {
+			delete kv.value;
+			kv.value = nullptr;
+		}
 	}
+	// 清空HashMap并重置容量，避免内存碎片
 	chunks.clear();
+	chunks.reset();
 }

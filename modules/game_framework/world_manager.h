@@ -13,6 +13,14 @@ class WorldManager : public Node {
 
 private:
 	World world;
+	int32_t seed;
+	
+	// 噪声参数
+	float noise_frequency;
+	int32_t noise_octaves;
+	float noise_lacunarity;
+	float noise_gain;
+	bool use_terrain_curve;
 
 protected:
 	static void _bind_methods();
@@ -20,6 +28,32 @@ protected:
 public:
 	WorldManager();
 	~WorldManager();
+
+	// Seed管理
+	void set_seed(int32_t p_seed);
+	int32_t get_seed() const { return seed; }
+	
+	// 噪声参数管理
+	void set_noise_frequency(float p_frequency);
+	float get_noise_frequency() const { return noise_frequency; }
+	
+	void set_noise_octaves(int32_t p_octaves);
+	int32_t get_noise_octaves() const { return noise_octaves; }
+	
+	void set_noise_lacunarity(float p_lacunarity);
+	float get_noise_lacunarity() const { return noise_lacunarity; }
+	
+	void set_noise_gain(float p_gain);
+	float get_noise_gain() const { return noise_gain; }
+	
+	void set_use_terrain_curve(bool p_use);
+	bool get_use_terrain_curve() const { return use_terrain_curve; }
+	
+	// 批量更新参数（避免多次清除chunks）
+	void update_all_params(int32_t p_seed, float p_frequency, int32_t p_octaves, 
+						   float p_lacunarity, float p_gain, bool p_use_curve);
+	
+	void update_noise_config();
 
 	// 数据查询接口
 	Dictionary get_chunk_data(int32_t chunk_x, int32_t chunk_y);

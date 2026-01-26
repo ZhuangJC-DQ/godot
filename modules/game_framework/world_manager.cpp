@@ -7,15 +7,118 @@
 #include "chunk.h"
 #include "core/object/class_db.h"
 
-WorldManager::WorldManager() {
+WorldManager::WorldManager() :
+		seed(1337),
+		noise_frequency(0.005f),
+		noise_octaves(3),
+		noise_lacunarity(2.0f),
+		noise_gain(0.4f),
+		use_terrain_curve(true) {
+	world.set_seed(seed);
+	update_noise_config();
 }
 
 WorldManager::~WorldManager() {
 }
 
 void WorldManager::_bind_methods() {
+	ClassDB::bind_method(D_METHOD("set_seed", "seed"), &WorldManager::set_seed);
+	ClassDB::bind_method(D_METHOD("get_seed"), &WorldManager::get_seed);
+	
+	ClassDB::bind_method(D_METHOD("set_noise_frequency", "frequency"), &WorldManager::set_noise_frequency);
+	ClassDB::bind_method(D_METHOD("get_noise_frequency"), &WorldManager::get_noise_frequency);
+	
+	ClassDB::bind_method(D_METHOD("set_noise_octaves", "octaves"), &WorldManager::set_noise_octaves);
+	ClassDB::bind_method(D_METHOD("get_noise_octaves"), &WorldManager::get_noise_octaves);
+	
+	ClassDB::bind_method(D_METHOD("set_noise_lacunarity", "lacunarity"), &WorldManager::set_noise_lacunarity);
+	ClassDB::bind_method(D_METHOD("get_noise_lacunarity"), &WorldManager::get_noise_lacunarity);
+	
+	ClassDB::bind_method(D_METHOD("set_noise_gain", "gain"), &WorldManager::set_noise_gain);
+	ClassDB::bind_method(D_METHOD("get_noise_gain"), &WorldManager::get_noise_gain);
+	
+	ClassDB::bind_method(D_METHOD("set_use_terrain_curve", "use_curve"), &WorldManager::set_use_terrain_curve);
+	ClassDB::bind_method(D_METHOD("get_use_terrain_curve"), &WorldManager::get_use_terrain_curve);
+	
+	ClassDB::bind_method(D_METHOD("update_all_params", "seed", "frequency", "octaves", "lacunarity", "gain", "use_curve"), 
+						 &WorldManager::update_all_params);
+	
 	ClassDB::bind_method(D_METHOD("get_chunk_data", "chunk_x", "chunk_y"), &WorldManager::get_chunk_data);
 	ClassDB::bind_method(D_METHOD("get_tile_height", "chunk_x", "chunk_y", "tile_x", "tile_y"), &WorldManager::get_tile_height);
+
+	ADD_GROUP("Terrain Generation", "");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "seed"), "set_seed", "get_seed");
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "noise_frequency", PROPERTY_HINT_RANGE, "0.001,0.1,0.001"), "set_noise_frequency", "get_noise_frequency");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "noise_octaves", PROPERTY_HINT_RANGE, "1,8,1"), "set_noise_octaves", "get_noise_octaves");
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "noise_lacunarity", PROPERTY_HINT_RANGE, "1.0,4.0,0.1"), "set_noise_lacunarity", "get_noise_lacunarity");
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "noise_gain", PROPERTY_HINT_RANGE, "0.1,1.0,0.05"), "set_noise_gain", "get_noise_gain");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "use_terrain_curve"), "set_use_terrain_curve", "get_use_terrain_curve");
+}
+
+void WorldManager::set_seed(int32_t p_seed) {
+	seed = p_seed;
+	world.set_seed(p_seed);
+	world.clear();
+}
+
+void WorldManager::set_noise_frequency(float p_frequency) {
+	noise_frequency = p_frequency;
+	update_noise_config();
+}
+
+void WorldManager::set_noise_octaves(int32_t p_octaves) {
+	noise_octaves = p_octaves;
+	update_noise_config();
+}
+
+void WorldManager::set_noise_lacunarity(float p_lacunarity) {
+	noise_lacunarity = p_lacunarity;
+	update_noise_config();
+}
+
+void WorldManager::set_noise_gain(float p_gain) {
+	noise_gain = p_gain;
+	update_noise_config();
+}
+
+void WorldManager::set_use_terrain_curve(bool p_use) {
+	use_terrain_curve = p_use;
+	update_noise_config();
+}
+
+void WorldManager::update_all_params(int32_t p_seed, float p_frequency, int32_t p_octaves,
+									 float p_lacunarity, float p_gain, bool p_use_curve) {
+	// 批量更新所有参数，只清除一次chunks
+	seed = p_seed;
+	noise_frequency = p_frequency;
+	noise_octaves = p_octaves;
+	noise_lacunarity = p_lacunarity;
+	noise_gain = p_gain;
+	use_terrain_curve = p_use_curve;
+	
+	world.set_seed(seed);
+	
+	NoiseConfig config;
+	config.frequency = noise_frequency;
+	config.octaves = noise_octaves;
+	config.lacunarity = noise_lacunarity;
+	config.gain = noise_gain;
+	config.use_terrain_curve = use_terrain_curve;
+	
+	world.set_noise_config(config);
+	world.clear(); // 只清除一次
+}
+
+void WorldManager::update_noise_config() {
+	NoiseConfig config;
+	config.frequency = noise_frequency;
+	config.octaves = noise_octaves;
+	config.lacunarity = noise_lacunarity;
+	config.gain = noise_gain;
+	config.use_terrain_curve = use_terrain_curve;
+	
+	world.set_noise_config(config);
+	world.clear(); // 清除旧的chunks，强制重新生成
 }
 
 Dictionary WorldManager::get_chunk_data(int32_t chunk_x, int32_t chunk_y) {

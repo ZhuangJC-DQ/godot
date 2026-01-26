@@ -8,38 +8,51 @@
 #include "core/variant/variant.h"
 #include "thirdparty/misc/FastNoiseLite.h"
 
-Chunk::Chunk(const ChunkCoord &p_coord) :
+Chunk::Chunk(const ChunkCoord &p_coord, int32_t p_seed, const NoiseConfig &p_config) :
 		coord(p_coord) {
-	generate();
+	generate(p_seed, p_config);
 }
 
-void Chunk::generate() {
+void Chunk::generate(int32_t p_seed, const NoiseConfig &p_config) {
 	// 创建 FastNoiseLite 实例
 	fastnoiselite::FastNoiseLite noise;
 
-	// 配置噪声参数
-	noise.SetSeed(coord.to_seed());
+	// 配置噪声参数 - 使用传入的参数
+	noise.SetSeed(p_seed);
 	noise.SetNoiseType(fastnoiselite::FastNoiseLite::NoiseType_Perlin);
-	noise.SetFrequency(0.01f); // 控制地形尺度，值越小地形越平缓
+	noise.SetFrequency(p_config.frequency);
 
 	// 配置分形参数（多层噪声叠加）
 	noise.SetFractalType(fastnoiselite::FastNoiseLite::FractalType_FBm);
-	noise.SetFractalOctaves(4); // 叠加层数
-	noise.SetFractalLacunarity(2.0f); // 频率倍数
-	noise.SetFractalGain(0.5f); // 振幅衰减
+	noise.SetFractalOctaves(p_config.octaves);
+	noise.SetFractalLacunarity(p_config.lacunarity);
+	noise.SetFractalGain(p_config.gain);
 
-	// 生成高度图
+	// 生成高度图 - 优化：减少函数调用，提前计算基础坐标
+	int base_x = coord.x * CHUNK_SIZE;
+	int base_y = coord.y * CHUNK_SIZE;
+	
 	for (int y = 0; y < CHUNK_SIZE; y++) {
+		float world_y = base_y + y;
 		for (int x = 0; x < CHUNK_SIZE; x++) {
-			// 计算世界坐标（确保跨区块连续）
-			float world_x = coord.x * CHUNK_SIZE + x;
-			float world_y = coord.y * CHUNK_SIZE + y;
+			float world_x = base_x + x;
 
-			// 获取噪声值 [-1.0, 1.0]
-			float noise_value = noise.GetNoise(world_x, world_y);
+			// 获取噪声值 [-1.0, 1.0] 并归一化到 [0.0, 1.0]
+			float height = (noise.GetNoise(world_x, world_y) + 1.0f) * 0.5f;
 
-			// 归一化到 [0.0, 1.0] 作为高度值
-			tiles[y][x] = (noise_value + 1.0f) * 0.5f;
+			// 可选：使用幂函数创建更多平原区域
+			if (p_config.use_terrain_curve) {
+				if (height < 0.5f) {
+					// 低地变更平
+					height = height * height * 2.0f; // 平方后缩放回[0, 0.5]
+				} else {
+					// 高地保持起伏
+					float t = (height - 0.5f) * 2.0f; // [0.5, 1.0] -> [0, 1.0]
+					height = 0.5f + t * t * 0.5f; // 平方后映射到[0.5, 1.0]
+				}
+			}
+
+			tiles[y][x] = height;
 		}
 	}
 }

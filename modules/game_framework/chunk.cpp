@@ -4,16 +4,22 @@
 
 #include "chunk.h"
 
+#include "core/os/os.h"
 #include "core/string/print_string.h"
 #include "core/variant/variant.h"
 #include "thirdparty/misc/FastNoiseLite.h"
 
 Chunk::Chunk(const ChunkCoord &p_coord, int32_t p_seed, const NoiseConfig &p_config) :
 		coord(p_coord) {
+	uint64_t start_time = OS::get_singleton()->get_ticks_usec();
 	generate(p_seed, p_config);
+	uint64_t end_time = OS::get_singleton()->get_ticks_usec();
+	print_line(vformat("[Chunk %d,%d] Generation: %.2f ms", coord.x, coord.y, (end_time - start_time) / 1000.0));
 }
 
 void Chunk::generate(int32_t p_seed, const NoiseConfig &p_config) {
+	uint64_t t0 = OS::get_singleton()->get_ticks_usec();
+	
 	// 创建 FastNoiseLite 实例
 	fastnoiselite::FastNoiseLite noise;
 
@@ -27,6 +33,9 @@ void Chunk::generate(int32_t p_seed, const NoiseConfig &p_config) {
 	noise.SetFractalOctaves(p_config.octaves);
 	noise.SetFractalLacunarity(p_config.lacunarity);
 	noise.SetFractalGain(p_config.gain);
+	
+	uint64_t t1 = OS::get_singleton()->get_ticks_usec();
+	print_line(vformat("  [Setup] %.2f ms", (t1 - t0) / 1000.0));
 
 	// 生成高度图 - 优化：减少函数调用，提前计算基础坐标
 	int base_x = coord.x * CHUNK_SIZE;
@@ -55,6 +64,9 @@ void Chunk::generate(int32_t p_seed, const NoiseConfig &p_config) {
 			tiles[y][x] = height;
 		}
 	}
+	
+	uint64_t t2 = OS::get_singleton()->get_ticks_usec();
+	print_line(vformat("  [Noise Gen] %.2f ms (%d tiles)", (t2 - t1) / 1000.0, CHUNK_SIZE * CHUNK_SIZE));
 }
 
 String Chunk::to_string(int preview_size) const {

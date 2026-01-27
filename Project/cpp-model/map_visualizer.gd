@@ -81,7 +81,6 @@ func _apply_terrain_params():
 	if world_manager == null:
 		return
 	
-	print("\n=== Applying Terrain Parameters ===")
 	var time_start = Time.get_ticks_msec()
 	
 	# 使用批量更新方法，只清除一次chunks
@@ -89,7 +88,7 @@ func _apply_terrain_params():
 									noise_lacunarity, noise_gain, use_terrain_curve)
 	
 	var time_end = Time.get_ticks_msec()
-	print("⏱ Parameters applied and chunks cleared in %d ms" % (time_end - time_start))
+	print("[GD] Params applied & clear: %d ms" % (time_end - time_start))
 	
 	# 在编辑器模式下更新可视化
 	if Engine.is_editor_hint():
@@ -100,22 +99,22 @@ func _update_visualization():
 		return
 	
 	var clear_start = Time.get_ticks_msec()
-	# 清除旧的可视化 - 立即删除而不是延迟
+	# 清除旧的可视化
 	for child in get_children():
 		remove_child(child)
 		child.queue_free()
 	# 强制处理延迟删除队列
 	await get_tree().process_frame
 	var clear_end = Time.get_ticks_msec()
-	print("⏱ Cleared old visualization in %d ms" % (clear_end - clear_start))
+	print("[GD] Clear old vis: %d ms" % (clear_end - clear_start))
 	
 	# 获取或创建 WorldManager
 	world_manager = get_node_or_null("../WorldManager")
 	if world_manager == null:
-		print("WorldManager not found in editor mode")
+		print("[ERROR] WorldManager not found")
 		return
 	
-	print("=== Editor Visualization: %dx%d Chunks starting from (%d, %d) ===" % [chunk_grid_size, chunk_grid_size, start_chunk_x, start_chunk_y])
+	print("\n=== VISUALIZING %dx%d Chunks (%d,%d) ===" % [chunk_grid_size, chunk_grid_size, start_chunk_x, start_chunk_y])
 	_visualize_all_chunks()
 
 func _visualize_all_chunks():
@@ -127,63 +126,29 @@ func _visualize_all_chunks():
 			var chunk_y = start_chunk_y + cy
 			visualize_chunk(chunk_x, chunk_y)
 	var total_end = Time.get_ticks_msec()
-	print("\n⏱⏱⏱ TOTAL ALL CHUNKS TIME: %d ms ⏱⏱⏱\n" % (total_end - total_start))
+	print("\n========== TOTAL: %d ms ==========\n" % (total_end - total_start))
 
 func visualize_chunk(chunk_x: int, chunk_y: int):
 	var time_start = Time.get_ticks_msec()
-	print("\n========== CHUNK (%d, %d) DATA ==========\n" % [chunk_x, chunk_y])
 	
 	# 获取 chunk 数据
 	var time_before_get = Time.get_ticks_msec()
 	var chunk_data = world_manager.get_chunk_data(chunk_x, chunk_y)
 	var time_after_get = Time.get_ticks_msec()
-	print("⏱ Chunk generation time: %d ms" % (time_after_get - time_before_get))
+	print("[GD] get_chunk_data(%d,%d): %d ms" % [chunk_x, chunk_y, time_after_get - time_before_get])
 	
 	if chunk_data.is_empty():
-		print("Chunk (%d, %d) not found or empty!" % [chunk_x, chunk_y])
+		print("[ERROR] Chunk (%d, %d) empty!" % [chunk_x, chunk_y])
 		return
-	
-	# 打印 chunk 基本信息
-	print("Chunk Coordinates: (%d, %d)" % [chunk_data["coord_x"], chunk_data["coord_y"]])
-	print("Terrain Generated: Perlin Noise")
-	
-	# 统计高度分布（简化采样以加速）
-	var height_min = 1.0
-	var height_max = 0.0
-	var height_sum = 0.0
-	
-	# 采样高度数据 - 增大步长减少采样
-	var sample_step = 64  # 从32增加到64
-	var sample_count = 0
-	
-	for y in range(0, CHUNK_SIZE, sample_step):
-		for x in range(0, CHUNK_SIZE, sample_step):
-			var height = world_manager.get_tile_height(chunk_x, chunk_y, x, y)
-			
-			if height >= 0:
-				height_min = min(height_min, height)
-				height_max = max(height_max, height)
-				height_sum += height
-				sample_count += 1
-	
-	# 打印高度统计
-	print("\n--- Height Map Statistics ---\n")
-	if sample_count > 0:
-		var height_avg = height_sum / sample_count
-		print("  Min Height: %.3f" % height_min)
-		print("  Max Height: %.3f" % height_max)
-		print("  Avg Height: %.3f" % height_avg)
-		print("  Samples: %d" % sample_count)
 	
 	# 创建可视化网格
 	var time_before_mesh = Time.get_ticks_msec()
 	create_terrain_mesh(chunk_x, chunk_y)
 	var time_after_mesh = Time.get_ticks_msec()
-	print("⏱ Mesh creation time: %d ms" % (time_after_mesh - time_before_mesh))
+	print("[GD] create_mesh(%d,%d): %d ms" % [chunk_x, chunk_y, time_after_mesh - time_before_mesh])
 	
 	var time_end = Time.get_ticks_msec()
-	print("⏱ Total chunk visualization time: %d ms" % (time_end - time_start))
-	print("\n========== END CHUNK DATA ==========\n")
+	print("[GD] TOTAL CHUNK(%d,%d): %d ms\n" % [chunk_x, chunk_y, time_end - time_start])
 
 func create_terrain_mesh(chunk_x: int, chunk_y: int):
 	# 降采样以提升性能 - 可以动态调整

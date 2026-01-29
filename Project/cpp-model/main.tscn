@@ -127,4 +127,4 @@ mesh = SubResource("ArrayMesh_kek77")
 surface_material_override/0 = SubResource("StandardMaterial3D_4c57u")
 
 [node name="ItemTest" type="Node3D" parent="." unique_id=111036111]
-script = ExtResource("3_h2yge")
+; script = ExtResource("3_h2yge")

@@ -4,15 +4,17 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "build",
-			"group": "build",
+			"label": "运行 - 游戏",
 			"type": "shell",
-			"command": "scons",
+			"command": "${workspaceFolder}/bin/Mu.windows.editor.dev.x86_64.exe",
 			"args": [
-				// enable for debugging with breakpoints
-				"dev_build=yes",
+				"--path",
+				"${workspaceFolder}/Project/cpp-model"
 			],
-			"problemMatcher": "$msCompile"
+			"options": {
+				"cwd": "${workspaceFolder}"
+			},
+			"problemMatcher": []
 		}
 	]
 }

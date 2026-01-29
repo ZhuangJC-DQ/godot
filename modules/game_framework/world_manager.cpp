@@ -13,9 +13,13 @@ WorldManager::WorldManager() :
 		noise_octaves(3),
 		noise_lacunarity(2.0f),
 		noise_gain(0.4f),
-		use_terrain_curve(true) {
+		use_terrain_curve(true),
+		town_min_height(0.25f),
+		town_max_height(0.45f),
+		town_min_distance(8) {
 	world.set_seed(seed);
 	update_noise_config();
+	update_town_config();
 }
 
 WorldManager::~WorldManager() {
@@ -24,27 +28,40 @@ WorldManager::~WorldManager() {
 void WorldManager::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_seed", "seed"), &WorldManager::set_seed);
 	ClassDB::bind_method(D_METHOD("get_seed"), &WorldManager::get_seed);
-	
+
 	ClassDB::bind_method(D_METHOD("set_noise_frequency", "frequency"), &WorldManager::set_noise_frequency);
 	ClassDB::bind_method(D_METHOD("get_noise_frequency"), &WorldManager::get_noise_frequency);
-	
+
 	ClassDB::bind_method(D_METHOD("set_noise_octaves", "octaves"), &WorldManager::set_noise_octaves);
 	ClassDB::bind_method(D_METHOD("get_noise_octaves"), &WorldManager::get_noise_octaves);
-	
+
 	ClassDB::bind_method(D_METHOD("set_noise_lacunarity", "lacunarity"), &WorldManager::set_noise_lacunarity);
 	ClassDB::bind_method(D_METHOD("get_noise_lacunarity"), &WorldManager::get_noise_lacunarity);
-	
+
 	ClassDB::bind_method(D_METHOD("set_noise_gain", "gain"), &WorldManager::set_noise_gain);
 	ClassDB::bind_method(D_METHOD("get_noise_gain"), &WorldManager::get_noise_gain);
-	
+
 	ClassDB::bind_method(D_METHOD("set_use_terrain_curve", "use_curve"), &WorldManager::set_use_terrain_curve);
 	ClassDB::bind_method(D_METHOD("get_use_terrain_curve"), &WorldManager::get_use_terrain_curve);
-	
-	ClassDB::bind_method(D_METHOD("update_all_params", "seed", "frequency", "octaves", "lacunarity", "gain", "use_curve"), 
-						 &WorldManager::update_all_params);
-	
+
+	ClassDB::bind_method(D_METHOD("update_all_params", "seed", "frequency", "octaves", "lacunarity", "gain", "use_curve"),
+			&WorldManager::update_all_params);
+
 	ClassDB::bind_method(D_METHOD("get_chunk_data", "chunk_x", "chunk_y"), &WorldManager::get_chunk_data);
 	ClassDB::bind_method(D_METHOD("get_tile_height", "chunk_x", "chunk_y", "tile_x", "tile_y"), &WorldManager::get_tile_height);
+
+	// 城镇配置方法绑定
+	ClassDB::bind_method(D_METHOD("set_town_min_height", "height"), &WorldManager::set_town_min_height);
+	ClassDB::bind_method(D_METHOD("get_town_min_height"), &WorldManager::get_town_min_height);
+	ClassDB::bind_method(D_METHOD("set_town_max_height", "height"), &WorldManager::set_town_max_height);
+	ClassDB::bind_method(D_METHOD("get_town_max_height"), &WorldManager::get_town_max_height);
+	ClassDB::bind_method(D_METHOD("set_town_min_distance", "distance"), &WorldManager::set_town_min_distance);
+	ClassDB::bind_method(D_METHOD("get_town_min_distance"), &WorldManager::get_town_min_distance);
+
+	// 城镇查询方法绑定
+	ClassDB::bind_method(D_METHOD("has_town", "chunk_x", "chunk_y"), &WorldManager::has_town);
+	ClassDB::bind_method(D_METHOD("get_town_info", "chunk_x", "chunk_y"), &WorldManager::get_town_info);
+	ClassDB::bind_method(D_METHOD("get_towns_in_range", "center_x", "center_y", "range"), &WorldManager::get_towns_in_range);
 
 	ADD_GROUP("Terrain Generation", "");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "seed"), "set_seed", "get_seed");
@@ -53,6 +70,11 @@ void WorldManager::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "noise_lacunarity", PROPERTY_HINT_RANGE, "1.0,4.0,0.1"), "set_noise_lacunarity", "get_noise_lacunarity");
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "noise_gain", PROPERTY_HINT_RANGE, "0.1,1.0,0.05"), "set_noise_gain", "get_noise_gain");
 	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "use_terrain_curve"), "set_use_terrain_curve", "get_use_terrain_curve");
+
+	ADD_GROUP("Town Generation", "");
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "town_min_height", PROPERTY_HINT_RANGE, "0.0,1.0,0.01"), "set_town_min_height", "get_town_min_height");
+	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "town_max_height", PROPERTY_HINT_RANGE, "0.0,1.0,0.01"), "set_town_max_height", "get_town_max_height");
+	ADD_PROPERTY(PropertyInfo(Variant::INT, "town_min_distance", PROPERTY_HINT_RANGE, "1,20,1"), "set_town_min_distance", "get_town_min_distance");
 }
 
 void WorldManager::set_seed(int32_t p_seed) {
@@ -87,7 +109,7 @@ void WorldManager::set_use_terrain_curve(bool p_use) {
 }
 
 void WorldManager::update_all_params(int32_t p_seed, float p_frequency, int32_t p_octaves,
-									 float p_lacunarity, float p_gain, bool p_use_curve) {
+		float p_lacunarity, float p_gain, bool p_use_curve) {
 	// 批量更新所有参数，只清除一次chunks
 	seed = p_seed;
 	noise_frequency = p_frequency;
@@ -95,16 +117,16 @@ void WorldManager::update_all_params(int32_t p_seed, float p_frequency, int32_t 
 	noise_lacunarity = p_lacunarity;
 	noise_gain = p_gain;
 	use_terrain_curve = p_use_curve;
-	
+
 	world.set_seed(seed);
-	
+
 	NoiseConfig config;
 	config.frequency = noise_frequency;
 	config.octaves = noise_octaves;
 	config.lacunarity = noise_lacunarity;
 	config.gain = noise_gain;
 	config.use_terrain_curve = use_terrain_curve;
-	
+
 	world.set_noise_config(config);
 	world.clear(); // 只清除一次
 }
@@ -116,7 +138,7 @@ void WorldManager::update_noise_config() {
 	config.lacunarity = noise_lacunarity;
 	config.gain = noise_gain;
 	config.use_terrain_curve = use_terrain_curve;
-	
+
 	world.set_noise_config(config);
 	world.clear(); // 清除旧的chunks，强制重新生成
 }
@@ -124,7 +146,7 @@ void WorldManager::update_noise_config() {
 Dictionary WorldManager::get_chunk_data(int32_t chunk_x, int32_t chunk_y) {
 	Dictionary data;
 	Chunk *chunk = world.get_chunk(chunk_x, chunk_y);
-	world.print_chunk(chunk_x, chunk_y, CHUNK_SIZE);
+	// world.print_chunk(chunk_x, chunk_y, CHUNK_SIZE);
 	if (!chunk) {
 		return data;
 	}
@@ -136,10 +158,75 @@ Dictionary WorldManager::get_chunk_data(int32_t chunk_x, int32_t chunk_y) {
 }
 
 float WorldManager::get_tile_height(int32_t chunk_x, int32_t chunk_y, int32_t tile_x, int32_t tile_y) {
-	Chunk* chunk = world.get_chunk(chunk_x, chunk_y);
+	Chunk *chunk = world.get_chunk(chunk_x, chunk_y);
 	if (!chunk || tile_x < 0 || tile_x >= CHUNK_SIZE || tile_y < 0 || tile_y >= CHUNK_SIZE) {
 		return -1.0f;
 	}
 
 	return chunk->tiles[tile_y][tile_x];
+}
+
+// 城镇配置 setter
+void WorldManager::set_town_min_height(float p_height) {
+	town_min_height = p_height;
+	update_town_config();
+}
+
+void WorldManager::set_town_max_height(float p_height) {
+	town_max_height = p_height;
+	update_town_config();
+}
+
+void WorldManager::set_town_min_distance(int p_distance) {
+	town_min_distance = p_distance;
+	update_town_config();
+}
+
+void WorldManager::update_town_config() {
+	TownConfig config;
+	config.min_height = town_min_height;
+	config.max_height = town_max_height;
+	config.min_distance_chunks = town_min_distance;
+	world.set_town_config(config);
+	world.clear();
+}
+
+// 城镇查询接口
+bool WorldManager::has_town(int32_t chunk_x, int32_t chunk_y) {
+	return world.has_town_at(chunk_x, chunk_y);
+}
+
+Dictionary WorldManager::get_town_info(int32_t chunk_x, int32_t chunk_y) {
+	Dictionary info;
+	TownInfo town = world.get_town_info(chunk_x, chunk_y);
+	if (town.valid) {
+		info["chunk_x"] = town.chunk_x;
+		info["chunk_y"] = town.chunk_y;
+		info["tile_x"] = town.tile_x;
+		info["tile_y"] = town.tile_y;
+		info["suitability"] = town.suitability;
+		info["valid"] = true;
+	} else {
+		info["valid"] = false;
+	}
+	return info;
+}
+
+Array WorldManager::get_towns_in_range(int32_t center_x, int32_t center_y, int range) {
+	Array towns;
+	for (int y = center_y - range; y <= center_y + range; y++) {
+		for (int x = center_x - range; x <= center_x + range; x++) {
+			if (world.has_town_at(x, y)) {
+				Dictionary info;
+				TownInfo town = world.get_town_info(x, y);
+				info["chunk_x"] = town.chunk_x;
+				info["chunk_y"] = town.chunk_y;
+				info["tile_x"] = town.tile_x;
+				info["tile_y"] = town.tile_y;
+				info["suitability"] = town.suitability;
+				towns.push_back(info);
+			}
+		}
+	}
+	return towns;
 }

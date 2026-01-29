@@ -16,6 +16,7 @@ module_obj.append(env_game.Object("world_manager.cpp"))
 # World 和 Chunk - 纯地形数据管理
 module_obj.append(env_game.Object("world.cpp"))
 module_obj.append(env_game.Object("chunk.cpp"))
+module_obj.append(env_game.Object("town_generator.cpp"))
 
 # ItemManager - 物品系统
 module_obj.append(env_game.Object("item/item.cpp"))

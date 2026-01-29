@@ -44,6 +44,12 @@ public:
 	ChunkCoord coord;
 	float tiles[CHUNK_SIZE][CHUNK_SIZE]; // 存储归一化高度值 [0.0, 1.0]
 
+	// 城镇数据
+	bool has_town = false;
+	int32_t town_tile_x = -1; // 城镇在 Chunk 内的 tile 坐标
+	int32_t town_tile_y = -1;
+	float suitability = 0.0f; // 城镇适宜度评分
+
 	Chunk(const ChunkCoord &p_coord, int32_t p_seed = 1337, const NoiseConfig &p_config = NoiseConfig());
 	void generate(int32_t p_seed, const NoiseConfig &p_config);
 	String to_string(int preview_size = 32) const;

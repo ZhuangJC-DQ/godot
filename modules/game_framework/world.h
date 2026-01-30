@@ -33,6 +33,6 @@ public:
 	void clear();
 
 	// 城镇查询接口
-	bool has_town_at(int32_t chunk_x, int32_t chunk_y);
-	TownInfo get_town_info(int32_t chunk_x, int32_t chunk_y);
+	int get_town_count(int32_t chunk_x, int32_t chunk_y);
+	Vector<TownInfo> get_chunk_towns(int32_t chunk_x, int32_t chunk_y);
 };

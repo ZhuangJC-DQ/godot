@@ -84,7 +84,7 @@ func _apply_terrain_params():
 	var time_start = Time.get_ticks_msec()
 	
 	# 使用批量更新方法，只清除一次chunks
-	world_manager.update_all_params(seed, noise_frequency, noise_octaves, 
+	world_manager.update_all_params(seed, noise_frequency, noise_octaves,
 									noise_lacunarity, noise_gain, use_terrain_curve)
 	
 	var time_end = Time.get_ticks_msec()
@@ -141,6 +141,28 @@ func visualize_chunk(chunk_x: int, chunk_y: int):
 		print("[ERROR] Chunk (%d, %d) empty!" % [chunk_x, chunk_y])
 		return
 	
+	# 检查城镇生成（Chunk 内泊松圆盘采样）
+	var time_before_town = Time.get_ticks_msec()
+	var town_count = world_manager.get_town_count(chunk_x, chunk_y)
+	var time_after_town = Time.get_ticks_msec()
+	
+	if town_count > 0:
+		var towns = world_manager.get_chunk_towns(chunk_x, chunk_y)
+		print("[TOWN] ✓ Generated %d towns in Chunk(%d,%d) | Query time: %d ms" % [
+			town_count, chunk_x, chunk_y,
+			time_after_town - time_before_town
+		])
+		for i in range(towns.size()):
+			var town = towns[i]
+			print("  [%d] Tile(%d,%d) | Suitability: %.3f" % [
+				i + 1, town.tile_x, town.tile_y, town.suitability
+			])
+	else:
+		print("[TOWN] ✗ No towns in Chunk(%d,%d) | Check time: %d ms" % [
+			chunk_x, chunk_y,
+			time_after_town - time_before_town
+		])
+	
 	# 创建可视化网格
 	var time_before_mesh = Time.get_ticks_msec()
 	create_terrain_mesh(chunk_x, chunk_y)
@@ -152,7 +174,7 @@ func visualize_chunk(chunk_x: int, chunk_y: int):
 
 func create_terrain_mesh(chunk_x: int, chunk_y: int):
 	# 降采样以提升性能 - 可以动态调整
-	var sample_step = 8  # 从4增加到8，减少75%的顶点数
+	var sample_step = 8 # 从4增加到8，减少75%的顶点数
 	var sampled_size = CHUNK_SIZE / sample_step
 	
 	# 计算chunk在世界空间中的起始坐标
@@ -184,7 +206,7 @@ func create_terrain_mesh(chunk_x: int, chunk_y: int):
 			# 使用高度值生成3D地形（Y轴为高度）
 			var pos = Vector3(
 				chunk_world_x + tile_x * TILE_SIZE,
-				height * height_scale,  # 应用高度缩放
+				height * height_scale, # 应用高度缩放
 				chunk_world_z + tile_y * TILE_SIZE
 			)
 			vertices.append(pos)
@@ -228,7 +250,7 @@ func create_terrain_mesh(chunk_x: int, chunk_y: int):
 	var material = StandardMaterial3D.new()
 	material.vertex_color_use_as_albedo = true
 	material.shading_mode = BaseMaterial3D.SHADING_MODE_PER_VERTEX
-	material.cull_mode = BaseMaterial3D.CULL_DISABLED  # 双面显示
+	material.cull_mode = BaseMaterial3D.CULL_DISABLED # 双面显示
 	
 	# 创建 MeshInstance3D
 	var mesh_instance = MeshInstance3D.new()
@@ -243,15 +265,15 @@ func create_terrain_mesh(chunk_x: int, chunk_y: int):
 func _get_height_color(height: float) -> Color:
 	# 可以自定义配色方案，这里使用地形色
 	if height < 0.2:
-		return Color(0.1, 0.3, 0.6)  # 深蓝（水）
+		return Color(0.1, 0.3, 0.6) # 深蓝（水）
 	elif height < 0.4:
-		return Color(0.8, 0.7, 0.4)  # 沙滩
+		return Color(0.8, 0.7, 0.4) # 沙滩
 	elif height < 0.6:
-		return Color(0.3, 0.7, 0.3)  # 草地
+		return Color(0.3, 0.7, 0.3) # 草地
 	elif height < 0.8:
-		return Color(0.2, 0.5, 0.2)  # 森林
+		return Color(0.2, 0.5, 0.2) # 森林
 	else:
-		return Color(0.9, 0.9, 0.9)  # 雪山
+		return Color(0.9, 0.9, 0.9) # 雪山
 	
 # 计算顶点法线
 func _calculate_normals(vertices: PackedVector3Array, indices: PackedInt32Array, grid_size: int) -> PackedVector3Array:

@@ -6,6 +6,7 @@
 
 #include "core/math/random_pcg.h"
 #include "core/string/ustring.h"
+#include "core/templates/vector.h"
 
 // 区块常量
 constexpr int CHUNK_SIZE = 256;
@@ -38,17 +39,25 @@ struct ChunkCoord {
 	}
 };
 
+// 城镇信息（仅存储 Chunk 内位置）
+struct TownInfo {
+	int32_t tile_x = 0; // Chunk 内 tile 坐标
+	int32_t tile_y = 0;
+	float suitability = 0.0f; // 适宜度评分 [0, 1]
+
+	TownInfo() = default;
+	TownInfo(int32_t tx, int32_t ty, float suit) :
+			tile_x(tx), tile_y(ty), suitability(suit) {}
+};
+
 // 区块数据 - 使用柏林噪声生成高度图
 class Chunk {
 public:
 	ChunkCoord coord;
 	float tiles[CHUNK_SIZE][CHUNK_SIZE]; // 存储归一化高度值 [0.0, 1.0]
 
-	// 城镇数据
-	bool has_town = false;
-	int32_t town_tile_x = -1; // 城镇在 Chunk 内的 tile 坐标
-	int32_t town_tile_y = -1;
-	float suitability = 0.0f; // 城镇适宜度评分
+	// 城镇数据 - 支持多个城镇
+	Vector<TownInfo> towns;
 
 	Chunk(const ChunkCoord &p_coord, int32_t p_seed = 1337, const NoiseConfig &p_config = NoiseConfig());
 	void generate(int32_t p_seed, const NoiseConfig &p_config);

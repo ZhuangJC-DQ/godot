@@ -4,7 +4,7 @@
 	"version": "2.0.0",
 	"tasks": [
 		{
-			"label": "运行 - 游戏",
+			"label": "run",
 			"type": "shell",
 			"command": "${workspaceFolder}/bin/Mu.windows.editor.dev.x86_64.exe",
 			"args": [
@@ -15,6 +15,17 @@
 				"cwd": "${workspaceFolder}"
 			},
 			"problemMatcher": []
+		},
+		{
+			"label": "build",
+			"group": "build",
+			"type": "shell",
+			"command": "scons",
+			"args": [
+				// enable for debugging with breakpoints
+				"dev_build=yes",
+			],
+			"problemMatcher": "$msCompile"
 		}
 	]
 }

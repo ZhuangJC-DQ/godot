@@ -58,9 +58,9 @@ void WorldManager::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_town_min_distance", "distance"), &WorldManager::set_town_min_distance);
 	ClassDB::bind_method(D_METHOD("get_town_min_distance"), &WorldManager::get_town_min_distance);
 
-	// 城镇查询方法绑定
-	ClassDB::bind_method(D_METHOD("has_town", "chunk_x", "chunk_y"), &WorldManager::has_town);
-	ClassDB::bind_method(D_METHOD("get_town_info", "chunk_x", "chunk_y"), &WorldManager::get_town_info);
+	// 城镇查询方法绑定 - 新 API
+	ClassDB::bind_method(D_METHOD("get_town_count", "chunk_x", "chunk_y"), &WorldManager::get_town_count);
+	ClassDB::bind_method(D_METHOD("get_chunk_towns", "chunk_x", "chunk_y"), &WorldManager::get_chunk_towns);
 	ClassDB::bind_method(D_METHOD("get_towns_in_range", "center_x", "center_y", "range"), &WorldManager::get_towns_in_range);
 
 	ADD_GROUP("Terrain Generation", "");
@@ -186,47 +186,48 @@ void WorldManager::update_town_config() {
 	TownConfig config;
 	config.min_height = town_min_height;
 	config.max_height = town_max_height;
-	config.min_distance_chunks = town_min_distance;
+	config.min_distance_tiles = town_min_distance; // 修正：使用 min_distance_tiles
 	world.set_town_config(config);
 	world.clear();
 }
 
-// 城镇查询接口
-bool WorldManager::has_town(int32_t chunk_x, int32_t chunk_y) {
-	return world.has_town_at(chunk_x, chunk_y);
+// 城镇查询接口 - 新 API
+int WorldManager::get_town_count(int32_t chunk_x, int32_t chunk_y) {
+	return world.get_town_count(chunk_x, chunk_y);
 }
 
-Dictionary WorldManager::get_town_info(int32_t chunk_x, int32_t chunk_y) {
-	Dictionary info;
-	TownInfo town = world.get_town_info(chunk_x, chunk_y);
-	if (town.valid) {
-		info["chunk_x"] = town.chunk_x;
-		info["chunk_y"] = town.chunk_y;
-		info["tile_x"] = town.tile_x;
-		info["tile_y"] = town.tile_y;
-		info["suitability"] = town.suitability;
-		info["valid"] = true;
-	} else {
-		info["valid"] = false;
+Array WorldManager::get_chunk_towns(int32_t chunk_x, int32_t chunk_y) {
+	Array result;
+	Vector<TownInfo> towns = world.get_chunk_towns(chunk_x, chunk_y);
+
+	for (int i = 0; i < towns.size(); i++) {
+		Dictionary info;
+		info["chunk_x"] = chunk_x;
+		info["chunk_y"] = chunk_y;
+		info["tile_x"] = towns[i].tile_x;
+		info["tile_y"] = towns[i].tile_y;
+		info["suitability"] = towns[i].suitability;
+		result.push_back(info);
 	}
-	return info;
+
+	return result;
 }
 
 Array WorldManager::get_towns_in_range(int32_t center_x, int32_t center_y, int range) {
-	Array towns;
+	Array all_towns;
 	for (int y = center_y - range; y <= center_y + range; y++) {
 		for (int x = center_x - range; x <= center_x + range; x++) {
-			if (world.has_town_at(x, y)) {
+			Vector<TownInfo> chunk_towns = world.get_chunk_towns(x, y);
+			for (int i = 0; i < chunk_towns.size(); i++) {
 				Dictionary info;
-				TownInfo town = world.get_town_info(x, y);
-				info["chunk_x"] = town.chunk_x;
-				info["chunk_y"] = town.chunk_y;
-				info["tile_x"] = town.tile_x;
-				info["tile_y"] = town.tile_y;
-				info["suitability"] = town.suitability;
-				towns.push_back(info);
+				info["chunk_x"] = x;
+				info["chunk_y"] = y;
+				info["tile_x"] = chunk_towns[i].tile_x;
+				info["tile_y"] = chunk_towns[i].tile_y;
+				info["suitability"] = chunk_towns[i].suitability;
+				all_towns.push_back(info);
 			}
 		}
 	}
-	return towns;
+	return all_towns;
 }

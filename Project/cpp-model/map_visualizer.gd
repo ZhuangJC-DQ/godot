@@ -30,6 +30,27 @@ const TILE_SIZE = 1.0
 		if Engine.is_editor_hint():
 			_update_visualization()
 
+@export var show_towns: bool = true:
+	set(value):
+		show_towns = value
+		if Engine.is_editor_hint():
+			_update_visualization()
+
+@export var town_marker_radius: float = 2.0:
+	set(value):
+		town_marker_radius = max(0.1, value)
+		if Engine.is_editor_hint():
+			_update_visualization()
+
+@export var town_marker_height_offset: float = 2.0:
+	set(value):
+		town_marker_height_offset = value
+		if Engine.is_editor_hint():
+			_update_visualization()
+
+@export var town_color_min: Color = Color(0.9, 0.2, 0.2)
+@export var town_color_max: Color = Color(0.2, 1.0, 0.2)
+
 @export var regenerate: bool = false:
 	set(value):
 		if value and Engine.is_editor_hint():
@@ -157,6 +178,8 @@ func visualize_chunk(chunk_x: int, chunk_y: int):
 			print("  [%d] Tile(%d,%d) | Suitability: %.3f" % [
 				i + 1, town.tile_x, town.tile_y, town.suitability
 			])
+			if show_towns:
+				_create_town_marker(chunk_x, chunk_y, town)
 	else:
 		print("[TOWN] ✗ No towns in Chunk(%d,%d) | Check time: %d ms" % [
 			chunk_x, chunk_y,
@@ -171,6 +194,43 @@ func visualize_chunk(chunk_x: int, chunk_y: int):
 	
 	var time_end = Time.get_ticks_msec()
 	print("[GD] TOTAL CHUNK(%d,%d): %d ms\n" % [chunk_x, chunk_y, time_end - time_start])
+
+func _create_town_marker(chunk_x: int, chunk_y: int, town: Dictionary):
+	if not town.has("tile_x") or not town.has("tile_y"):
+		return
+
+	var tile_x = int(town["tile_x"])
+	var tile_y = int(town["tile_y"])
+	var suitability = 0.0
+	if town.has("suitability"):
+		suitability = float(town["suitability"])
+
+	var height = world_manager.get_tile_height(chunk_x, chunk_y, tile_x, tile_y)
+	if height < 0:
+		height = 0.5
+
+	var world_x = chunk_x * CHUNK_SIZE * TILE_SIZE + tile_x * TILE_SIZE
+	var world_z = chunk_y * CHUNK_SIZE * TILE_SIZE + tile_y * TILE_SIZE
+	var world_y = height * height_scale + town_marker_height_offset
+
+	var marker = MeshInstance3D.new()
+	marker.mesh = SphereMesh.new()
+	marker.mesh.radius = town_marker_radius
+	marker.mesh.height = town_marker_radius * 2.0
+
+	var material = StandardMaterial3D.new()
+	material.shading_mode = BaseMaterial3D.SHADING_MODE_PER_PIXEL
+	material.albedo_color = town_color_min.lerp(town_color_max, clamp(suitability, 0.0, 1.0))
+	material.emission_enabled = true
+	material.emission = material.albedo_color
+	material.emission_energy_multiplier = 0.5
+	marker.set_surface_override_material(0, material)
+
+	marker.transform.origin = Vector3(world_x, world_y, world_z)
+	marker.name = "Town_%d_%d_%d_%d" % [chunk_x, chunk_y, tile_x, tile_y]
+	add_child(marker)
+	if Engine.is_editor_hint():
+		marker.owner = get_tree().edited_scene_root
 
 func create_terrain_mesh(chunk_x: int, chunk_y: int):
 	# 降采样以提升性能 - 可以动态调整

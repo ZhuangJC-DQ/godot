@@ -33,6 +33,16 @@ Chunk *World::get_chunk(int32_t x, int32_t y) {
 				chunk->towns.size(), x, y));
 	}
 
+	// 3. 生成道路片段（基于虚拟 MST）
+	chunk->road_segments = RoadGenerator::generate_road_segments_for_chunk(
+			x, y, seed, noise_config, town_config, road_config);
+	chunk->roads_generated = true;
+
+	if (!chunk->road_segments.is_empty()) {
+		print_line(vformat("[Road] Generated %d road segments in Chunk(%d,%d)",
+				chunk->road_segments.size(), x, y));
+	}
+
 	chunks[key] = chunk;
 	return chunk;
 }
@@ -62,4 +72,14 @@ int World::get_town_count(int32_t chunk_x, int32_t chunk_y) {
 Vector<TownInfo> World::get_chunk_towns(int32_t chunk_x, int32_t chunk_y) {
 	Chunk *chunk = get_chunk(chunk_x, chunk_y);
 	return chunk ? chunk->towns : Vector<TownInfo>();
+}
+
+int World::get_road_count(int32_t chunk_x, int32_t chunk_y) {
+	Chunk *chunk = get_chunk(chunk_x, chunk_y);
+	return chunk ? chunk->road_segments.size() : 0;
+}
+
+Vector<RoadSegment> World::get_chunk_roads(int32_t chunk_x, int32_t chunk_y) {
+	Chunk *chunk = get_chunk(chunk_x, chunk_y);
+	return chunk ? chunk->road_segments : Vector<RoadSegment>();
 }

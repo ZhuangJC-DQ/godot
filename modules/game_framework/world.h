@@ -6,6 +6,7 @@
 
 #include "chunk.h"
 #include "core/templates/hash_map.h"
+#include "road_generator.h"
 #include "town_generator.h"
 
 class World {
@@ -14,6 +15,7 @@ private:
 	int32_t seed;
 	NoiseConfig noise_config;
 	TownConfig town_config;
+	RoadConfig road_config;
 
 public:
 	World();
@@ -28,6 +30,9 @@ public:
 	void set_town_config(const TownConfig &p_config) { town_config = p_config; }
 	const TownConfig &get_town_config() const { return town_config; }
 
+	void set_road_config(const RoadConfig &p_config) { road_config = p_config; }
+	const RoadConfig &get_road_config() const { return road_config; }
+
 	Chunk *get_chunk(int32_t x, int32_t y);
 	void print_chunk(int32_t x, int32_t y, int preview_size = 32);
 	void clear();
@@ -35,4 +40,8 @@ public:
 	// 城镇查询接口
 	int get_town_count(int32_t chunk_x, int32_t chunk_y);
 	Vector<TownInfo> get_chunk_towns(int32_t chunk_x, int32_t chunk_y);
+
+	// 道路查询接口
+	int get_road_count(int32_t chunk_x, int32_t chunk_y);
+	Vector<RoadSegment> get_chunk_roads(int32_t chunk_x, int32_t chunk_y);
 };

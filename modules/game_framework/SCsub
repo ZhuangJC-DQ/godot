@@ -17,6 +17,7 @@ module_obj.append(env_game.Object("world_manager.cpp"))
 module_obj.append(env_game.Object("world.cpp"))
 module_obj.append(env_game.Object("chunk.cpp"))
 module_obj.append(env_game.Object("town_generator.cpp"))
+module_obj.append(env_game.Object("road_generator.cpp"))
 
 # ItemManager - 物品系统
 module_obj.append(env_game.Object("item/item.cpp"))

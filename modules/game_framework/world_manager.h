@@ -81,6 +81,10 @@ public:
 	Array get_chunk_towns(int32_t chunk_x, int32_t chunk_y);
 	Array get_towns_in_range(int32_t center_x, int32_t center_y, int range);
 
+	// 道路查询接口
+	int get_road_count(int32_t chunk_x, int32_t chunk_y);
+	Array get_chunk_roads(int32_t chunk_x, int32_t chunk_y);
+
 	// C++ 内部访问
 	World *get_world() { return &world; }
 	Chunk *get_chunk_ptr(int32_t x, int32_t y) { return world.get_chunk(x, y); }

@@ -19,6 +19,10 @@ config/icon="res://icon.svg"
 
 ItemManagerSingleton="*res://autoload/item_manager_singleton.gd"
 
+[editor_plugins]
+
+enabled=PackedStringArray("res://addons/godot_mcp/plugin.cfg")
+
 [physics]
 
 3d/physics_engine="Jolt Physics"

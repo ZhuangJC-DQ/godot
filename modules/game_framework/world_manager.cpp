@@ -63,6 +63,10 @@ void WorldManager::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_chunk_towns", "chunk_x", "chunk_y"), &WorldManager::get_chunk_towns);
 	ClassDB::bind_method(D_METHOD("get_towns_in_range", "center_x", "center_y", "range"), &WorldManager::get_towns_in_range);
 
+	// 道路查询方法绑定
+	ClassDB::bind_method(D_METHOD("get_road_count", "chunk_x", "chunk_y"), &WorldManager::get_road_count);
+	ClassDB::bind_method(D_METHOD("get_chunk_roads", "chunk_x", "chunk_y"), &WorldManager::get_chunk_roads);
+
 	ADD_GROUP("Terrain Generation", "");
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "seed"), "set_seed", "get_seed");
 	ADD_PROPERTY(PropertyInfo(Variant::FLOAT, "noise_frequency", PROPERTY_HINT_RANGE, "0.001,0.1,0.001"), "set_noise_frequency", "get_noise_frequency");
@@ -230,4 +234,35 @@ Array WorldManager::get_towns_in_range(int32_t center_x, int32_t center_y, int r
 		}
 	}
 	return all_towns;
+}
+
+// 道路查询接口
+int WorldManager::get_road_count(int32_t chunk_x, int32_t chunk_y) {
+	return world.get_road_count(chunk_x, chunk_y);
+}
+
+Array WorldManager::get_chunk_roads(int32_t chunk_x, int32_t chunk_y) {
+	Array result;
+	Vector<RoadSegment> roads = world.get_chunk_roads(chunk_x, chunk_y);
+
+	for (int i = 0; i < roads.size(); i++) {
+		Dictionary road_dict;
+		
+		// 转换 tiles 数组
+		Array tiles_array;
+		for (int j = 0; j < roads[i].tiles.size(); j++) {
+			Dictionary tile;
+			tile["x"] = roads[i].tiles[j].x;
+			tile["y"] = roads[i].tiles[j].y;
+			tiles_array.push_back(tile);
+		}
+		
+		road_dict["tiles"] = tiles_array;
+		road_dict["town_a_id"] = roads[i].town_a_id;
+		road_dict["town_b_id"] = roads[i].town_b_id;
+		road_dict["total_cost"] = roads[i].total_cost;
+		result.push_back(road_dict);
+	}
+
+	return result;
 }

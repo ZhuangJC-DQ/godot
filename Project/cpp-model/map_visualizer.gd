@@ -36,6 +36,18 @@ const TILE_SIZE = 1.0
 		if Engine.is_editor_hint():
 			_update_visualization()
 
+@export var show_roads: bool = true:
+	set(value):
+		show_roads = value
+		if Engine.is_editor_hint():
+			_update_visualization()
+
+@export var road_color: Color = Color(0.4, 0.35, 0.3):
+	set(value):
+		road_color = value
+		if Engine.is_editor_hint():
+			_update_visualization()
+
 @export var town_marker_radius: float = 2.0:
 	set(value):
 		town_marker_radius = max(0.1, value)
@@ -186,9 +198,36 @@ func visualize_chunk(chunk_x: int, chunk_y: int):
 			time_after_town - time_before_town
 		])
 	
-	# 创建可视化网格
+	# 检查道路生成
+	var road_tiles = {}  # 用于快速查找道路tile
+	if show_roads:
+		var time_before_road = Time.get_ticks_msec()
+		var road_count = world_manager.get_road_count(chunk_x, chunk_y)
+		if road_count > 0:
+			var roads = world_manager.get_chunk_roads(chunk_x, chunk_y)
+			var total_tiles = 0
+			for road in roads:
+				if road.has("tiles"):
+					var tiles = road["tiles"]
+					total_tiles += tiles.size()
+					for tile in tiles:
+						var key = Vector2i(tile.x, tile.y)
+						road_tiles[key] = true
+			var time_after_road = Time.get_ticks_msec()
+			print("[ROAD] ✓ Generated %d road segments (%d tiles) in Chunk(%d,%d) | Query time: %d ms" % [
+				road_count, total_tiles, chunk_x, chunk_y,
+				time_after_road - time_before_road
+			])
+		else:
+			var time_after_road = Time.get_ticks_msec()
+			print("[ROAD] ✗ No roads in Chunk(%d,%d) | Check time: %d ms" % [
+				chunk_x, chunk_y,
+				time_after_road - time_before_road
+			])
+	
+	# 创建可视化网格（传递道路信息）
 	var time_before_mesh = Time.get_ticks_msec()
-	create_terrain_mesh(chunk_x, chunk_y)
+	create_terrain_mesh(chunk_x, chunk_y, road_tiles)
 	var time_after_mesh = Time.get_ticks_msec()
 	print("[GD] create_mesh(%d,%d): %d ms" % [chunk_x, chunk_y, time_after_mesh - time_before_mesh])
 	
@@ -232,7 +271,7 @@ func _create_town_marker(chunk_x: int, chunk_y: int, town: Dictionary):
 	if Engine.is_editor_hint():
 		marker.owner = get_tree().edited_scene_root
 
-func create_terrain_mesh(chunk_x: int, chunk_y: int):
+func create_terrain_mesh(chunk_x: int, chunk_y: int, road_tiles: Dictionary = {}):
 	# 降采样以提升性能 - 可以动态调整
 	var sample_step = 8 # 从4增加到8，减少75%的顶点数
 	var sampled_size = CHUNK_SIZE / sample_step
@@ -271,8 +310,28 @@ func create_terrain_mesh(chunk_x: int, chunk_y: int):
 			)
 			vertices.append(pos)
 			
-			# 根据高度生成颜色渐变（可选：也可以用其他配色方案）
-			var color = _get_height_color(height)
+			# 检查是否是道路tile（检查采样范围内是否有道路）
+			var is_road = false
+			if show_roads and not road_tiles.is_empty():
+				# 检查采样区域内是否有道路tile
+				for dy in range(sample_step):
+					for dx in range(sample_step):
+						var check_x = tile_x + dx
+						var check_y = tile_y + dy
+						if check_x < CHUNK_SIZE and check_y < CHUNK_SIZE:
+							var key = Vector2i(check_x, check_y)
+							if road_tiles.has(key):
+								is_road = true
+								break
+					if is_road:
+						break
+			
+			# 根据高度或道路生成颜色
+			var color: Color
+			if is_road:
+				color = road_color
+			else:
+				color = _get_height_color(height)
 			colors.append(color)
 			
 			uvs.append(Vector2(float(x) / sampled_size, float(y) / sampled_size))

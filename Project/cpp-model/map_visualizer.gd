@@ -97,6 +97,10 @@ func _ready():
 		if world_manager == null:
 			push_error("WorldManager not found!")
 			return
+		# 清除编辑器保存的旧子节点
+		for child in get_children():
+			remove_child(child)
+			child.queue_free()
 		_apply_terrain_params()
 		print("=== MapVisualizer Started ===")
 		_visualize_all_chunks()
@@ -380,6 +384,35 @@ func create_terrain_mesh(chunk_x: int, chunk_y: int, road_tiles: Dictionary = {}
 	add_child(mesh_instance)
 	if Engine.is_editor_hint():
 		mesh_instance.owner = get_tree().edited_scene_root
+	
+	# 手动构建碰撞体 —— 直接从顶点/索引数据创建 ConcavePolygonShape3D
+	var faces = PackedVector3Array()
+	for idx in range(0, indices.size(), 3):
+		faces.append(vertices[indices[idx]])
+		faces.append(vertices[indices[idx + 1]])
+		faces.append(vertices[indices[idx + 2]])
+	
+	var shape = ConcavePolygonShape3D.new()
+	shape.backface_collision = true
+	shape.set_faces(faces)
+	
+	var static_body = StaticBody3D.new()
+	static_body.collision_layer = 1
+	static_body.collision_mask = 1
+	static_body.name = "Chunk_%d_%d_col" % [chunk_x, chunk_y]
+	
+	var col_shape = CollisionShape3D.new()
+	col_shape.shape = shape
+	static_body.add_child(col_shape)
+	
+	# 碰撞体作为 MapVisualizer 的直接子节点（而非 MeshInstance3D 的子节点）
+	add_child(static_body)
+	
+	print("[Collision] Chunk(%d,%d): %d triangles, body added" % [chunk_x, chunk_y, faces.size() / 3])
+	
+	if Engine.is_editor_hint():
+		static_body.owner = get_tree().edited_scene_root
+		col_shape.owner = get_tree().edited_scene_root
 
 func _get_height_color(height: float) -> Color:
 	# 可以自定义配色方案，这里使用地形色

@@ -54,6 +54,7 @@ public:
 		MOUSE_MODE_CAPTURED,
 		MOUSE_MODE_CONFINED,
 		MOUSE_MODE_CONFINED_HIDDEN,
+		MOUSE_MODE_CAPTURED_NO_WARP, // Like CAPTURED but does not warp mouse to window center.
 		MOUSE_MODE_MAX,
 	};
 

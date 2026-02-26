@@ -467,6 +467,7 @@ class DisplayServerWindows : public DisplayServer {
 	bool mouse_mode_override_enabled = false;
 	void _mouse_update_mode();
 	int restore_mouse_trails = 0;
+	POINT captured_no_warp_saved_pos = {}; // Cursor position saved when entering MOUSE_MODE_CAPTURED_NO_WARP.
 
 	bool use_raw_input = false;
 	bool drop_events = false;

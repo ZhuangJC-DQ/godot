@@ -212,7 +212,7 @@ Vector2i DisplayServerWindows::_get_screen_expand_offset(int p_screen) const {
 }
 
 void DisplayServerWindows::_set_mouse_mode_impl(MouseMode p_mode) {
-	if (p_mode == MOUSE_MODE_HIDDEN || p_mode == MOUSE_MODE_CAPTURED || p_mode == MOUSE_MODE_CONFINED_HIDDEN) {
+	if (p_mode == MOUSE_MODE_HIDDEN || p_mode == MOUSE_MODE_CAPTURED || p_mode == MOUSE_MODE_CAPTURED_NO_WARP || p_mode == MOUSE_MODE_CONFINED_HIDDEN) {
 		// Hide cursor before moving.
 		if (hCursor == nullptr) {
 			hCursor = SetCursor(nullptr);
@@ -221,7 +221,7 @@ void DisplayServerWindows::_set_mouse_mode_impl(MouseMode p_mode) {
 		}
 	}
 
-	if (windows.has(MAIN_WINDOW_ID) && (p_mode == MOUSE_MODE_CAPTURED || p_mode == MOUSE_MODE_CONFINED || p_mode == MOUSE_MODE_CONFINED_HIDDEN)) {
+	if (windows.has(MAIN_WINDOW_ID) && (p_mode == MOUSE_MODE_CAPTURED || p_mode == MOUSE_MODE_CAPTURED_NO_WARP || p_mode == MOUSE_MODE_CONFINED || p_mode == MOUSE_MODE_CONFINED_HIDDEN)) {
 		// Mouse is grabbed (captured or confined).
 		WindowID window_id = _get_focused_window_or_popup();
 		if (!windows.has(window_id)) {
@@ -239,13 +239,18 @@ void DisplayServerWindows::_set_mouse_mode_impl(MouseMode p_mode) {
 		ClientToScreen(wd.hWnd, (POINT *)&clipRect.left);
 		ClientToScreen(wd.hWnd, (POINT *)&clipRect.right);
 		ClipCursor(&clipRect);
-		if (p_mode == MOUSE_MODE_CAPTURED) {
-			center = window_get_size() / 2;
-			POINT pos = { (int)center.x, (int)center.y };
-			ClientToScreen(wd.hWnd, &pos);
-			SetCursorPos(pos.x, pos.y);
+		if (p_mode == MOUSE_MODE_CAPTURED || p_mode == MOUSE_MODE_CAPTURED_NO_WARP) {
+			if (p_mode == MOUSE_MODE_CAPTURED) {
+				// Warp cursor to window center (classic CAPTURED behaviour).
+				center = window_get_size() / 2;
+				POINT pos = { (int)center.x, (int)center.y };
+				ClientToScreen(wd.hWnd, &pos);
+				SetCursorPos(pos.x, pos.y);
+			} else {
+				// MOUSE_MODE_CAPTURED_NO_WARP: save current screen cursor position to restore later.
+				GetCursorPos(&captured_no_warp_saved_pos);
+			}
 			SetCapture(wd.hWnd);
-
 			_register_raw_input_devices(window_id);
 		}
 	} else {
@@ -262,7 +267,6 @@ void DisplayServerWindows::_set_mouse_mode_impl(MouseMode p_mode) {
 	}
 
 	if (p_mode == MOUSE_MODE_VISIBLE || p_mode == MOUSE_MODE_CONFINED) {
-		// Show cursor.
 		CursorShape c = cursor_shape;
 		cursor_shape = CURSOR_MAX;
 		cursor_set_shape(c);
@@ -952,7 +956,7 @@ void DisplayServerWindows::warp_mouse(const Point2i &p_position) {
 		return; // No focused window?
 	}
 
-	if (mouse_mode == MOUSE_MODE_CAPTURED) {
+	if (mouse_mode == MOUSE_MODE_CAPTURED || mouse_mode == MOUSE_MODE_CAPTURED_NO_WARP) {
 		old_x = p_position.x;
 		old_y = p_position.y;
 	} else {
@@ -5025,7 +5029,7 @@ LRESULT DisplayServerWindows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 						}
 					}
 				}
-			} else if (mouse_mode == MOUSE_MODE_CAPTURED && raw->header.dwType == RIM_TYPEMOUSE) {
+			} else if ((mouse_mode == MOUSE_MODE_CAPTURED || mouse_mode == MOUSE_MODE_CAPTURED_NO_WARP) && raw->header.dwType == RIM_TYPEMOUSE) {
 				Ref<InputEventMouseMotion> mm;
 				mm.instantiate();
 
@@ -5041,13 +5045,19 @@ LRESULT DisplayServerWindows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 
 				Point2i c(windows[window_id].width / 2, windows[window_id].height / 2);
 
-				// Centering just so it works as before.
-				POINT pos = { (int)c.x, (int)c.y };
-				ClientToScreen(windows[window_id].hWnd, &pos);
-				SetCursorPos(pos.x, pos.y);
-
-				mm->set_position(c);
-				mm->set_global_position(c);
+				if (mouse_mode == MOUSE_MODE_CAPTURED) {
+					// Centering just so it works as before.
+					POINT pos = { (int)c.x, (int)c.y };
+					ClientToScreen(windows[window_id].hWnd, &pos);
+					SetCursorPos(pos.x, pos.y);
+					mm->set_position(c);
+					mm->set_global_position(c);
+				} else {
+					// MOUSE_MODE_CAPTURED_NO_WARP: keep actual cursor position.
+					SetCursorPos(captured_no_warp_saved_pos.x, captured_no_warp_saved_pos.y);
+					mm->set_position(Vector2(captured_no_warp_saved_pos.x, captured_no_warp_saved_pos.y));
+					mm->set_global_position(Vector2(captured_no_warp_saved_pos.x, captured_no_warp_saved_pos.y));
+				}
 				mm->set_velocity(Vector2(0, 0));
 				mm->set_screen_velocity(Vector2(0, 0));
 
@@ -5124,7 +5134,7 @@ LRESULT DisplayServerWindows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 					windows[window_id].last_pen_inverted = inverted;
 
 					// Don't calculate relative mouse movement if we don't have focus in CAPTURED mode.
-					if (!windows[window_id].window_focused && mouse_mode == MOUSE_MODE_CAPTURED) {
+					if (!windows[window_id].window_focused && (mouse_mode == MOUSE_MODE_CAPTURED || mouse_mode == MOUSE_MODE_CAPTURED_NO_WARP)) {
 						break;
 					}
 
@@ -5162,6 +5172,7 @@ LRESULT DisplayServerWindows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 						ClientToScreen(windows[window_id].hWnd, &pos);
 						SetCursorPos(pos.x, pos.y);
 					}
+					// MOUSE_MODE_CAPTURED_NO_WARP: no warp, let normal old_x/old_y tracking below handle relative motion.
 
 					mm->set_velocity(Input::get_singleton()->get_last_mouse_velocity());
 					mm->set_screen_velocity(mm->get_velocity());
@@ -5185,7 +5196,7 @@ LRESULT DisplayServerWindows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			}
 		} break;
 		case WM_POINTERENTER: {
-			if (mouse_mode == MOUSE_MODE_CAPTURED && use_raw_input) {
+			if ((mouse_mode == MOUSE_MODE_CAPTURED || mouse_mode == MOUSE_MODE_CAPTURED_NO_WARP) && use_raw_input) {
 				break;
 			}
 
@@ -5214,7 +5225,7 @@ LRESULT DisplayServerWindows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 		} break;
 		case WM_POINTERDOWN:
 		case WM_POINTERUP: {
-			if (mouse_mode == MOUSE_MODE_CAPTURED && use_raw_input) {
+			if ((mouse_mode == MOUSE_MODE_CAPTURED || mouse_mode == MOUSE_MODE_CAPTURED_NO_WARP) && use_raw_input) {
 				break;
 			}
 
@@ -5326,7 +5337,7 @@ LRESULT DisplayServerWindows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			return 0;
 		} break;
 		case WM_POINTERUPDATE: {
-			if (mouse_mode == MOUSE_MODE_CAPTURED && use_raw_input) {
+			if ((mouse_mode == MOUSE_MODE_CAPTURED || mouse_mode == MOUSE_MODE_CAPTURED_NO_WARP) && use_raw_input) {
 				break;
 			}
 
@@ -5360,7 +5371,7 @@ LRESULT DisplayServerWindows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			if (window_mouseover_id != window_id) {
 				// Mouse enter.
 
-				if (mouse_mode != MOUSE_MODE_CAPTURED) {
+				if (mouse_mode != MOUSE_MODE_CAPTURED && mouse_mode != MOUSE_MODE_CAPTURED_NO_WARP) {
 					if (window_mouseover_id != INVALID_WINDOW_ID && windows.has(window_mouseover_id)) {
 						// Leave previous window.
 						_send_window_event(windows[window_mouseover_id], WINDOW_EVENT_MOUSE_EXIT);
@@ -5378,7 +5389,7 @@ LRESULT DisplayServerWindows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			}
 
 			// Don't calculate relative mouse movement if we don't have focus in CAPTURED mode.
-			if (!windows[window_id].window_focused && mouse_mode == MOUSE_MODE_CAPTURED) {
+			if (!windows[window_id].window_focused && (mouse_mode == MOUSE_MODE_CAPTURED || mouse_mode == MOUSE_MODE_CAPTURED_NO_WARP)) {
 				break;
 			}
 
@@ -5470,7 +5481,7 @@ LRESULT DisplayServerWindows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				break;
 			}
 
-			if (mouse_mode == MOUSE_MODE_CAPTURED && use_raw_input) {
+			if ((mouse_mode == MOUSE_MODE_CAPTURED || mouse_mode == MOUSE_MODE_CAPTURED_NO_WARP) && use_raw_input) {
 				break;
 			}
 
@@ -5490,7 +5501,7 @@ LRESULT DisplayServerWindows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			if (window_mouseover_id != over_id) {
 				// Mouse enter.
 
-				if (mouse_mode != MOUSE_MODE_CAPTURED) {
+				if (mouse_mode != MOUSE_MODE_CAPTURED && mouse_mode != MOUSE_MODE_CAPTURED_NO_WARP) {
 					if (window_mouseover_id != INVALID_WINDOW_ID && windows.has(window_mouseover_id)) {
 						// Leave previous window.
 						_send_window_event(windows[window_mouseover_id], WINDOW_EVENT_MOUSE_EXIT);
@@ -5511,7 +5522,7 @@ LRESULT DisplayServerWindows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 			}
 
 			// Don't calculate relative mouse movement if we don't have focus in CAPTURED mode.
-			if (!windows[window_id].window_focused && mouse_mode == MOUSE_MODE_CAPTURED) {
+			if (!windows[window_id].window_focused && (mouse_mode == MOUSE_MODE_CAPTURED || mouse_mode == MOUSE_MODE_CAPTURED_NO_WARP)) {
 				break;
 			}
 
@@ -5737,18 +5748,18 @@ LRESULT DisplayServerWindows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 
 			mb->set_position(Vector2(GET_X_LPARAM(lParam), GET_Y_LPARAM(lParam)));
 
-			if (mouse_mode == MOUSE_MODE_CAPTURED && !use_raw_input) {
+			if ((mouse_mode == MOUSE_MODE_CAPTURED || mouse_mode == MOUSE_MODE_CAPTURED_NO_WARP) && !use_raw_input) {
 				mb->set_position(Vector2(old_x, old_y));
 			}
 
 			if (uMsg != WM_MOUSEWHEEL && uMsg != WM_MOUSEHWHEEL) {
 				if (mb->is_pressed()) {
-					if (++pressrc > 0 && mouse_mode != MOUSE_MODE_CAPTURED) {
+					if (++pressrc > 0 && mouse_mode != MOUSE_MODE_CAPTURED && mouse_mode != MOUSE_MODE_CAPTURED_NO_WARP) {
 						SetCapture(hWnd);
 					}
 				} else {
 					if (--pressrc <= 0 || mouse_get_button_state().is_empty()) {
-						if (mouse_mode != MOUSE_MODE_CAPTURED) {
+						if (mouse_mode != MOUSE_MODE_CAPTURED && mouse_mode != MOUSE_MODE_CAPTURED_NO_WARP) {
 							ReleaseCapture();
 						}
 						pressrc = 0;
@@ -5885,7 +5896,7 @@ LRESULT DisplayServerWindows::WndProc(HWND hWnd, UINT uMsg, WPARAM wParam, LPARA
 				}
 
 				// Update cursor clip region after window rect has changed.
-				if (mouse_mode == MOUSE_MODE_CAPTURED || mouse_mode == MOUSE_MODE_CONFINED || mouse_mode == MOUSE_MODE_CONFINED_HIDDEN) {
+				if (mouse_mode == MOUSE_MODE_CAPTURED || mouse_mode == MOUSE_MODE_CAPTURED_NO_WARP || mouse_mode == MOUSE_MODE_CONFINED || mouse_mode == MOUSE_MODE_CONFINED_HIDDEN) {
 					RECT crect;
 					GetClientRect(window.hWnd, &crect);
 					crect.right -= off.x;

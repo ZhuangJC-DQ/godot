@@ -1,7 +1,7 @@
 extends CharacterBody3D
 
 ## 第三人称玩家控制器
-## WASD 移动，鼠标旋转视角，Shift 加速
+## WASD 移动，按住右键旋转视角，Shift 加速
 
 @export_group("Movement")
 @export var walk_speed: float = 8.0
@@ -25,7 +25,7 @@ var _mesh: MeshInstance3D
 
 var _camera_yaw: float = 0.0
 var _camera_pitch: float = 0.0
-var _mouse_captured: bool = false
+var _rmb_held: bool = false   # 右键是否按住
 var _physics_warmup: int = 0
 var _world_manager: WorldManager
 var _terrain_ready: bool = false
@@ -44,8 +44,8 @@ func _ready() -> void:
 	_camera_pitch = deg_to_rad(-30.0)
 	_apply_camera_rotation()
 
-	Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-	_mouse_captured = true
+	# 默认显示鼠标，右键按住时才隐藏
+	Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
 
 	# 获取 WorldManager 引用
 	_world_manager = get_node_or_null("../WorldManager")
@@ -59,19 +59,20 @@ func _ready() -> void:
 
 
 func _unhandled_input(event: InputEvent) -> void:
-	if event is InputEventMouseMotion and _mouse_captured:
+	# 右键按下/松开：CAPTURED_NO_WARP 模式——隐藏鼠标、捕获输入，松开后鼠标回到按下时的位置
+	if event is InputEventMouseButton and event.button_index == MOUSE_BUTTON_RIGHT:
+		_rmb_held = event.pressed
+		if _rmb_held:
+			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED_NO_WARP
+		else:
+			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
+
+	# 只有右键按住时鼠标移动才旋转视角
+	if event is InputEventMouseMotion and _rmb_held:
 		_camera_yaw -= event.relative.x * mouse_sensitivity
 		_camera_pitch -= event.relative.y * mouse_sensitivity
 		_camera_pitch = clampf(_camera_pitch, deg_to_rad(camera_min_pitch), deg_to_rad(camera_max_pitch))
 		_apply_camera_rotation()
-
-	if event is InputEventKey and event.pressed and event.keycode == KEY_ESCAPE:
-		if _mouse_captured:
-			Input.mouse_mode = Input.MOUSE_MODE_VISIBLE
-			_mouse_captured = false
-		else:
-			Input.mouse_mode = Input.MOUSE_MODE_CAPTURED
-			_mouse_captured = true
 
 
 func _physics_process(delta: float) -> void:

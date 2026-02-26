@@ -141,7 +141,7 @@ ItemManager::save_to_dict() / load_from_dict(data)
 | 物品类型模板系统 | ⬜ 未开始 | 高 | JSON/CSV 定义物品模板（ItemTemplate），运行时从模板创建实例 |
 | 掉落表系统 | ⬜ 未开始 | 高 | loot_tables.json，按概率、权重生成掉落 |
 | 背包 UI | ⬜ 未开始 | 高 | 背包界面、物品拖拽、物品提示 |
-| 玩家角色 | ⬜ 未开始 | 高 | CharacterBody3D，移动、相机控制 |
+| 玩家角色 | ✅ 已完成 | 高 | CharacterBody3D，移动、相机控制 |
 | 道路可视化 | ⬜ 未开始 | 中 | 在地形网格上渲染道路，标记路径 tile |
 | 城镇建筑放置 | ⬜ 未开始 | 中 | 在城镇位置生成建筑模型（Kenney 素材） |
 | 存档系统 | ⬜ 未开始 | 中 | 文件 I/O，自动保存/加载 |

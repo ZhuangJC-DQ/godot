@@ -4,6 +4,8 @@
 [ext_resource type="Script" uid="uid://bqw25r807mqwr" path="res://map_visualizer.gd" id="2_script"]
 [ext_resource type="Script" uid="uid://bxgat4fhyl5rr" path="res://player.gd" id="3_h2yge"]
 [ext_resource type="Script" path="res://test_item_templates.gd" id="4_test_templates"]
+[ext_resource type="Script" path="res://ui/inventory_demo.gd" id="5_inventory_demo"]
+[ext_resource type="Script" path="res://ui/inventory_ui.gd" id="6_inventory_ui"]
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_1"]
 panorama = ExtResource("1_background")
@@ -799,3 +801,9 @@ fov = 65.0
 
 [node name="TestItemTemplates" type="Node" parent="."]
 script = ExtResource("4_test_templates")
+
+[node name="InventoryUI" type="CanvasLayer" parent="."]
+script = ExtResource("6_inventory_ui")
+
+[node name="InventoryDemo" type="Node" parent="."]
+script = ExtResource("5_inventory_demo")

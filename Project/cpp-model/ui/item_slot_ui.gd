@@ -1,7 +1,7 @@
 class_name ItemSlotUI extends PanelContainer
 ## 单个物品槽 UI（纯代码构建，无需场景文件）
 
-const SLOT_SIZE := Vector2(72, 92)
+const SLOT_SIZE := Vector2(80, 100)  # 固定槽位尺寸
 
 const TAG_COLORS := {
 	"weapon":     Color(0.80, 0.25, 0.20),
@@ -26,6 +26,8 @@ signal slot_unhovered
 
 func _init() -> void:
 	custom_minimum_size = SLOT_SIZE
+	size_flags_horizontal = Control.SIZE_FILL
+	size_flags_vertical   = Control.SIZE_FILL
 	_build_ui()
 
 func _build_ui() -> void:
@@ -42,10 +44,11 @@ func _build_ui() -> void:
 	vbox.add_theme_constant_override("separation", 2)
 	add_child(vbox)
 
-	# 图标面板（正方形）
+	# 图标面板——固定比例，EXPAND_FILL 纵向撑满
 	_icon_panel = Panel.new()
-	_icon_panel.custom_minimum_size = Vector2(62, 54)
-	_icon_panel.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
+	_icon_panel.custom_minimum_size = Vector2(0, 60)
+	_icon_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_icon_panel.size_flags_vertical   = Control.SIZE_EXPAND_FILL
 	var icon_bg := StyleBoxFlat.new()
 	icon_bg.bg_color = DEFAULT_COLOR
 	icon_bg.set_corner_radius_all(4)

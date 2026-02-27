@@ -64,6 +64,8 @@ public:
 	Item *get_item_at_slot(int slot) const;
 	// 查找物品所在槽位，返回 -1 表示未找到
 	int find_item_slot(Item *p_item) const;
+	// 容器内移动物品到新位置（插入语义，自动压缩空槽）
+	bool reorder_item(Item *p_item, int new_index);
 	// 清空容器
 	void clear_container();
 

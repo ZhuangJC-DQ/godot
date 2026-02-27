@@ -95,6 +95,9 @@ public:
 	// 获取容器中所有物品的 ID 列表（GDScript Array）
 	TypedArray<int> get_container_items(uint64_t container_id) const;
 
+	// 容器内移动物品到新位置（插入语义）
+	bool move_item_in_container(uint64_t container_id, uint64_t item_id, int new_index);
+
 	// 清空容器
 	void clear_container(uint64_t container_id);
 

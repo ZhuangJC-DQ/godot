@@ -2,6 +2,7 @@ extends CanvasLayer
 ## 背包/物品展示 UI
 ## 按 I 键切换显示/隐藏；标题栏拖拽移动；右下角拖拽缩放
 
+const ItemSlotUI = preload("res://ui/item_slot_ui.gd")
 const COLS := 5
 const MAX_SLOTS := 20
 const MIN_SIZE := Vector2(300, 200)   # 最小窗口尺寸
@@ -18,13 +19,19 @@ var _tooltip: PanelContainer
 var _tooltip_label: Label
 var _slots: Array[ItemSlotUI] = []
 
-# ── 拖拽状态 ────────────────────────────────────────────────────
+# ── 拖拽状态（窗口移动 / 缩放）────────────────────────────────
 var _drag_moving  := false
 var _drag_offset  := Vector2.ZERO
 var _drag_resizing := false
 var _resize_start_mouse := Vector2.ZERO
 var _resize_start_size  := Vector2.ZERO
 var _resize_start_pos   := Vector2.ZERO
+
+# ── 物品拖拽状态 ────────────────────────────────────────────────
+var _item_dragging := false
+var _drag_source_slot: ItemSlotUI = null
+var _drag_preview: PanelContainer = null    # 拖拽时的半透明预览
+var _drag_target_slot: ItemSlotUI = null    # 当前悬停的目标槽
 
 # ── 其他状态 ────────────────────────────────────────────────────
 var _container_id: int = -1
@@ -249,8 +256,20 @@ func _clamp_panel_pos(pos: Vector2, sz: Vector2) -> Vector2:
 	pos.y = clampf(pos.y, 0, vp.y - sz.y)
 	return pos
 
+## 返回面板在视口中的矩形（用于跨容器拖拽判定）
+func get_panel_rect() -> Rect2:
+	return Rect2(_panel.position, _panel.size)
+
 # ════════════════════════════════════════════════════════════════
 func _input(event: InputEvent) -> void:
+	# 拖拽中松开鼠标（可能在槽位外松开）
+	if _item_dragging and event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if mb.button_index == MOUSE_BUTTON_LEFT and not mb.pressed:
+			_end_item_drag()
+			get_viewport().set_input_as_handled()
+			return
+
 	if event.is_action_pressed("ui_inventory"):
 		get_viewport().set_input_as_handled()
 		if visible:
@@ -290,6 +309,7 @@ func refresh(container_id: int) -> void:
 		slot.setup(item_id)
 		slot.slot_hovered.connect(_on_slot_hovered.bind(slot))
 		slot.slot_unhovered.connect(_on_slot_unhovered)
+		slot.gui_input.connect(_on_slot_gui_input.bind(slot))
 		_grid.add_child(slot)
 		_slots.append(slot)
 
@@ -297,9 +317,86 @@ func refresh(container_id: int) -> void:
 	_on_panel_resized()
 
 # ════════════════════════════════════════════════════════════════
+# 物品拖拽排序（插入语义）
+# ════════════════════════════════════════════════════════════════
+func _on_slot_gui_input(event: InputEvent, slot: ItemSlotUI) -> void:
+	if event is InputEventMouseButton:
+		var mb := event as InputEventMouseButton
+		if mb.button_index == MOUSE_BUTTON_LEFT:
+			if mb.pressed and slot.get_item_id() > 0 and not _item_dragging:
+				_start_item_drag(slot)
+			elif not mb.pressed and _item_dragging:
+				_end_item_drag()
+
+func _start_item_drag(source: ItemSlotUI) -> void:
+	_item_dragging = true
+	_drag_source_slot = source
+	_tooltip.visible = false   # 拖拽时隐藏 tooltip
+
+	# 创建半透明预览（简单的 PanelContainer 跟随鼠标）
+	_drag_preview = PanelContainer.new()
+	_drag_preview.custom_minimum_size = ItemSlotUI.SLOT_SIZE
+	_drag_preview.modulate = Color(1, 1, 1, 0.65)
+	_drag_preview.z_index = 30
+	_drag_preview.mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+	var preview_style := StyleBoxFlat.new()
+	preview_style.bg_color = source._get_color(source._type_id)
+	preview_style.set_corner_radius_all(4)
+	preview_style.set_border_width_all(2)
+	preview_style.border_color = Color(1.0, 0.88, 0.3)
+	_drag_preview.add_theme_stylebox_override("panel", preview_style)
+
+	var lbl := Label.new()
+	lbl.text = source._icon_label.text
+	lbl.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	lbl.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	lbl.add_theme_font_size_override("font_size", 22)
+	lbl.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_drag_preview.add_child(lbl)
+
+	add_child(_drag_preview)  # 挂在 CanvasLayer 上
+	_drag_preview.position = get_viewport().get_mouse_position() - ItemSlotUI.SLOT_SIZE * 0.5
+
+	# 降低源槽位透明度
+	source.modulate = Color(1, 1, 1, 0.3)
+
+func _end_item_drag() -> void:
+	if not _item_dragging:
+		return
+	_item_dragging = false
+
+	# 执行移动
+	if _drag_target_slot and _drag_source_slot and _drag_target_slot != _drag_source_slot:
+		var source_id := _drag_source_slot.get_item_id()
+		if source_id > 0 and _container_id > 0:
+			# 计算目标索引：目标槽在 _slots 中的位置
+			var target_idx := _slots.find(_drag_target_slot)
+			if target_idx >= 0:
+				ItemManagerSingleton.move_item_in_container(_container_id, source_id, target_idx)
+				refresh(_container_id)
+
+	# 清理
+	if _drag_source_slot:
+		_drag_source_slot.modulate = Color(1, 1, 1, 1)
+		_drag_source_slot = null
+	if _drag_preview:
+		_drag_preview.queue_free()
+		_drag_preview = null
+	if _drag_target_slot:
+		_drag_target_slot.hide_insert_indicator()
+		_drag_target_slot = null
+
+	# 清除所有槽位的指示线
+	for s in _slots:
+		s.hide_insert_indicator()
+
+# ════════════════════════════════════════════════════════════════
 # Tooltip
 # ════════════════════════════════════════════════════════════════
 func _on_slot_hovered(item_id: int, _slot: ItemSlotUI) -> void:
+	if _item_dragging:
+		return   # 拖拽期间不显示 tooltip
 	if item_id <= 0:
 		_tooltip.visible = false
 		return
@@ -334,6 +431,12 @@ func _process(_delta: float) -> void:
 		_resize_handle.position = _panel.position + _panel.size - Vector2(20, 20)
 	_resize_handle.visible = visible
 
+	# ── 物品拖拽预览跟随 ──
+	if _item_dragging and _drag_preview:
+		var mp := get_viewport().get_mouse_position()
+		_drag_preview.position = mp - ItemSlotUI.SLOT_SIZE * 0.5
+		_update_drag_target(mp)
+
 	if _tooltip.visible:
 		var mp := get_viewport().get_mouse_position()
 		var vp := get_viewport().get_visible_rect().size
@@ -341,6 +444,26 @@ func _process(_delta: float) -> void:
 		if tp.x + _tooltip.size.x > vp.x: tp.x = mp.x - _tooltip.size.x - 8
 		if tp.y + _tooltip.size.y > vp.y: tp.y = mp.y - _tooltip.size.y - 8
 		_tooltip.position = tp
+
+## 判断鼠标悬停在哪个 slot 上并显示插入指示线
+func _update_drag_target(mouse_pos: Vector2) -> void:
+	var new_target: ItemSlotUI = null
+	for slot in _slots:
+		if slot == _drag_source_slot:
+			continue
+		var slot_rect := slot.get_global_rect()
+		if slot_rect.has_point(mouse_pos):
+			new_target = slot
+			break
+
+	if new_target != _drag_target_slot:
+		# 清除旧指示线
+		if _drag_target_slot:
+			_drag_target_slot.hide_insert_indicator()
+		_drag_target_slot = new_target
+		# 显示新指示线
+		if _drag_target_slot:
+			_drag_target_slot.show_insert_indicator(true)
 
 # ════════════════════════════════════════════════════════════════
 # 右下角缩放手柄绘制（内部类）

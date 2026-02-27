@@ -48,6 +48,12 @@ func set_item_data(item_id: int, data: Dictionary) -> void:
 func add_to_container(item_id: int, container_id: int, slot: int = -1) -> bool:
 	return item_manager.add_to_container(item_id, container_id, slot)
 
+func remove_from_container(item_id: int) -> bool:
+	return item_manager.remove_from_container(item_id)
+
+func move_item_in_container(container_id: int, item_id: int, new_index: int) -> bool:
+	return item_manager.move_item_in_container(container_id, item_id, new_index)
+
 func get_container_items(container_id: int) -> Array:
 	return item_manager.get_container_items(container_id)
 

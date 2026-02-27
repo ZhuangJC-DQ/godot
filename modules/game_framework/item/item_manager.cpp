@@ -52,6 +52,7 @@ void ItemManager::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_slot_in_container", "item_id"), &ItemManager::get_slot_in_container);
 	ClassDB::bind_method(D_METHOD("get_item_at_slot", "container_id", "slot"), &ItemManager::get_item_at_slot);
 	ClassDB::bind_method(D_METHOD("get_container_items", "container_id"), &ItemManager::get_container_items);
+	ClassDB::bind_method(D_METHOD("move_item_in_container", "container_id", "item_id", "new_index"), &ItemManager::move_item_in_container);
 	ClassDB::bind_method(D_METHOD("clear_container", "container_id"), &ItemManager::clear_container);
 
 	// === 批量操作 ===
@@ -294,6 +295,17 @@ TypedArray<int> ItemManager::get_container_items(uint64_t container_id) const {
 	}
 
 	return result;
+}
+
+bool ItemManager::move_item_in_container(uint64_t container_id, uint64_t item_id, int new_index) {
+	Item *container = get_item(container_id);
+	Item *item = get_item(item_id);
+	ERR_FAIL_COND_V(!container, false);
+	ERR_FAIL_COND_V(!item, false);
+	ERR_FAIL_COND_V(!container->is_container(), false);
+	ERR_FAIL_COND_V(item->get_container_id() != container_id, false);
+
+	return container->reorder_item(item, new_index);
 }
 
 void ItemManager::clear_container(uint64_t container_id) {

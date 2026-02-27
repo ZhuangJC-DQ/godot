@@ -20,9 +20,15 @@ var _icon_panel: Panel
 var _icon_label: Label
 var _name_label: Label
 var _count_label: Label
+var _insert_indicator: ColorRect   # 插入位置指示线
 
 signal slot_hovered(item_id: int)
 signal slot_unhovered
+signal slot_drag_started(slot: ItemSlotUI)
+signal slot_drag_ended(slot: ItemSlotUI)
+
+func get_item_id() -> int:
+	return _item_id
 
 func _init() -> void:
 	custom_minimum_size = SLOT_SIZE
@@ -42,6 +48,7 @@ func _build_ui() -> void:
 	var vbox := VBoxContainer.new()
 	vbox.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	vbox.add_theme_constant_override("separation", 2)
+	vbox.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(vbox)
 
 	# 图标面板——固定比例，EXPAND_FILL 纵向撑满
@@ -49,6 +56,7 @@ func _build_ui() -> void:
 	_icon_panel.custom_minimum_size = Vector2(0, 60)
 	_icon_panel.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	_icon_panel.size_flags_vertical   = Control.SIZE_EXPAND_FILL
+	_icon_panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	var icon_bg := StyleBoxFlat.new()
 	icon_bg.bg_color = DEFAULT_COLOR
 	icon_bg.set_corner_radius_all(4)
@@ -60,6 +68,7 @@ func _build_ui() -> void:
 	_icon_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	_icon_label.set_anchors_and_offsets_preset(Control.PRESET_FULL_RECT)
 	_icon_label.add_theme_font_size_override("font_size", 22)
+	_icon_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_icon_panel.add_child(_icon_label)
 
 	_name_label = Label.new()
@@ -67,13 +76,41 @@ func _build_ui() -> void:
 	_name_label.add_theme_font_size_override("font_size", 11)
 	_name_label.add_theme_color_override("font_color", Color(0.9, 0.9, 0.9))
 	_name_label.clip_text = true
+	_name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.add_child(_name_label)
 
 	_count_label = Label.new()
 	_count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
 	_count_label.add_theme_font_size_override("font_size", 10)
 	_count_label.add_theme_color_override("font_color", Color(0.7, 0.85, 1.0))
+	_count_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	vbox.add_child(_count_label)
+
+	# 插入指示线（默认隐藏，拖拽悬停时由 InventoryUI 控制显示）
+	_insert_indicator = ColorRect.new()
+	_insert_indicator.color = Color(1.0, 0.88, 0.3, 0.9)
+	_insert_indicator.custom_minimum_size = Vector2(3, 0)
+	_insert_indicator.set_anchors_and_offsets_preset(Control.PRESET_LEFT_WIDE)
+	_insert_indicator.offset_left = -2
+	_insert_indicator.offset_right = 1
+	_insert_indicator.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_insert_indicator.visible = false
+	add_child(_insert_indicator)
+
+## 显示/隐藏插入指示线（左侧 = true，右侧 = false）
+func show_insert_indicator(left_side: bool = true) -> void:
+	_insert_indicator.visible = true
+	if left_side:
+		_insert_indicator.set_anchors_and_offsets_preset(Control.PRESET_LEFT_WIDE)
+		_insert_indicator.offset_left = -2
+		_insert_indicator.offset_right = 1
+	else:
+		_insert_indicator.set_anchors_and_offsets_preset(Control.PRESET_RIGHT_WIDE)
+		_insert_indicator.offset_left = -1
+		_insert_indicator.offset_right = 2
+
+func hide_insert_indicator() -> void:
+	_insert_indicator.visible = false
 
 func _ready() -> void:
 	mouse_entered.connect(_on_mouse_entered)
@@ -148,8 +185,3 @@ func _on_mouse_entered() -> void:
 
 func _on_mouse_exited() -> void:
 	slot_unhovered.emit()
-
-static func make(p_item_id: int) -> ItemSlotUI:
-	var s := ItemSlotUI.new()
-	s.setup(p_item_id)
-	return s

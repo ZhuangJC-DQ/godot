@@ -4,6 +4,16 @@ extends Node3D
 const CHUNK_SIZE = 256
 const TILE_SIZE = 1.0
 
+## 随机物品的候选 type_id（容器类型）
+const LOOT_CONTAINER_TYPES := [100, 101]  # 宝箱, 背包
+## 容器内可能出现的物品 type_id
+const LOOT_ITEM_TYPES := [1, 2, 3, 4, 5]  # 铁剑, 金币, 药水, 面包, 铁盾
+
+## 地图物品被点击时发出
+signal map_item_clicked(container_id: int)
+
+var _map_items: Array = []   # 运行时生成的 MapItem 引用
+
 @export_group("Chunk Grid")
 @export var start_chunk_x: int = 0:
 	set(value):
@@ -256,6 +266,37 @@ func _create_town_marker(chunk_x: int, chunk_y: int, town: Dictionary):
 	var world_z = chunk_y * CHUNK_SIZE * TILE_SIZE + tile_y * TILE_SIZE
 	var world_y = height * height_scale + town_marker_height_offset
 
+	# ── 运行时：生成可交互的 MapItem ──
+	if not Engine.is_editor_hint():
+		var MapItemScript = preload("res://map_item.gd")
+		var rng := RandomNumberGenerator.new()
+		rng.seed = hash(Vector2i(chunk_x * 256 + tile_x, chunk_y * 256 + tile_y))
+
+		# 随机选择容器类型
+		var type_id: int = LOOT_CONTAINER_TYPES[rng.randi() % LOOT_CONTAINER_TYPES.size()]
+		var container_id: int = ItemManagerSingleton.create_item(type_id)
+
+		# 随机填充 2-5 个物品
+		var item_count := rng.randi_range(2, 5)
+		for _i in range(item_count):
+			var loot_type: int = LOOT_ITEM_TYPES[rng.randi() % LOOT_ITEM_TYPES.size()]
+			var loot_id: int = ItemManagerSingleton.create_item(loot_type)
+			# 随机堆叠
+			if loot_type in [2, 3, 4]:  # 金币/药水/面包 可堆叠
+				ItemManagerSingleton.item_manager.set_stack_count(loot_id, rng.randi_range(1, 10))
+			ItemManagerSingleton.add_to_container(loot_id, container_id)
+
+		var map_item: Area3D = MapItemScript.new()
+		add_child(map_item)   # 先加入场景树，再 setup（避免 global_transform 警告）
+		map_item.setup(container_id, Vector3(world_x, world_y, world_z), type_id)
+		map_item.clicked.connect(_on_map_item_clicked)
+		_map_items.append(map_item)
+		print("[MapItem] Spawned %s at Chunk(%d,%d) Tile(%d,%d)" % [
+			ItemManagerSingleton.get_item_data(container_id).get("name", "?"),
+			chunk_x, chunk_y, tile_x, tile_y])
+		return
+
+	# ── 编辑器模式：保持原有球体标记 ──
 	var marker = MeshInstance3D.new()
 	marker.mesh = SphereMesh.new()
 	marker.mesh.radius = town_marker_radius
@@ -274,6 +315,11 @@ func _create_town_marker(chunk_x: int, chunk_y: int, town: Dictionary):
 	add_child(marker)
 	if Engine.is_editor_hint():
 		marker.owner = get_tree().edited_scene_root
+
+func _on_map_item_clicked(map_item: Area3D) -> void:
+	var cid: int = map_item.container_id
+	print("[MapVisualizer] Item clicked: container_id=%d" % cid)
+	map_item_clicked.emit(cid)
 
 func create_terrain_mesh(chunk_x: int, chunk_y: int, road_tiles: Dictionary = {}):
 	# 降采样以提升性能 - 可以动态调整

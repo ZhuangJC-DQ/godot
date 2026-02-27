@@ -62,13 +62,59 @@ ItemManager::save_to_dict() / load_from_dict(data)
 
 ---
 
+## 已完成 UI 模块
+
+**物品模板系统**：`ItemTemplateManager`（C++ 单例）+ `data/item_templates.json`
+**视觉数据库**：`ItemVisualDB` autoload + `data/item_visuals/*.tres`
+**背包 UI**：`ui/inventory_ui.gd`（CanvasLayer）+ `ui/item_slot_ui.gd`（槽位组件）
+
+```
+Project/cpp-model/
+  ui/
+    inventory_ui.gd       # 背包/容器窗口（CanvasLayer，拖拽移动/缩放，动态列数）
+    item_slot_ui.gd       # 单个槽位（PanelContainer，固定 80×100，颜色/图标）
+    inventory_demo.gd     # 演示初始化（创建背包 + 6 种物品）
+  data/
+    item_templates.json   # 7 种模板（type_id 1-5, 100, 101）
+    item_visuals/         # .tres 视觉描述资源
+  autoload/
+    item_manager_singleton.gd   # ItemManager + ItemTemplateManager 包装
+    item_visual_db.gd           # 加载 item_visuals/*.tres
+```
+
+### 背包 UI 关键设计
+- 按 `I` 键打开/关闭，标题栏拖拽移动，右下角手柄缩放
+- 动态列数：`cols = floor((可用宽 + sep) / (slot_w + sep))`
+- 槽位固定 `80×100`，颜色按 tag 分（weapon=红, armor=蓝, consumable=绿...）
+- Tooltip 跟随鼠标，显示物品详情
+- 容器 ID 驱动：`open_container(id)` / `refresh(id)`
+
+---
+
+## 设计理念：万物皆容器
+
+核心思想：**每个物品都可以是一个容器**，可以包含其他物品，形成树状嵌套结构。
+
+### 交互模型
+1. **背包内拖拽排序**（插入语义）：拖拽物品到目标位置时，执行**插入**而非交换。
+   容器是**顺序容器**（非格子系统），物品紧密排列，拖到空位 = 移到队尾
+2. **地图物品交互**：城镇生成点放置随机物品容器（宝箱/背包等），
+   玩家点击 3D 物品 → 打开该物品的容器 UI → 可将物品拖拽到背包
+3. **跨容器拖拽**：从世界容器拖到背包 = `remove_from_container` + `add_to_container`
+
+### C++ 支持接口
+```cpp
+// 容器内移动（插入语义）
+ItemManager::move_item_in_container(container_id, item_id, new_index)
+```
+
+---
+
 ## 计划中功能
 
 | 功能 | 优先级 |
 |------|--------|
-| 物品模板系统（ItemTemplate + JSON） | 高 |
 | 掉落表系统 | 高 |
-| 背包 UI | 高 |
 | 道路可视化 | 中 |
 | 城镇建筑放置 | 中 |
 | 存档系统 | 中 |

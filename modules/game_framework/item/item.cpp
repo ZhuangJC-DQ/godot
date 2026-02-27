@@ -86,6 +86,30 @@ int Item::find_item_slot(Item *p_item) const {
 	return contained_items.find(p_item);
 }
 
+bool Item::reorder_item(Item *p_item, int new_index) {
+	ERR_FAIL_COND_V(p_item == nullptr, false);
+	ERR_FAIL_COND_V(!is_container(), false);
+
+	int old_idx = contained_items.find(p_item);
+	ERR_FAIL_COND_V(old_idx == -1, false);
+
+	// 1. 移除
+	contained_items.remove_at(old_idx);
+
+	// 2. 压缩空槽（移除 nullptr）
+	for (int i = contained_items.size() - 1; i >= 0; i--) {
+		if (contained_items[i] == nullptr) {
+			contained_items.remove_at(i);
+		}
+	}
+
+	// 3. 插入到目标位置（clamp 到有效范围）
+	int clamped = CLAMP(new_index, 0, contained_items.size());
+	contained_items.insert(clamped, p_item);
+
+	return true;
+}
+
 void Item::clear_container() {
 	for (Item *item : contained_items) {
 		if (item != nullptr) {

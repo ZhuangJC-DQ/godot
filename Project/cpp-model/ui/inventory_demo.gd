@@ -1,10 +1,12 @@
 extends Node
-## 背包演示初始化
+## 背包演示初始化 + 世界物品交互桥接
 ## 创建演示物品并绑定到 InventoryUI
-## 按 I 键打开/关闭背包
+## 按 I 键打开/关闭背包；点击地图物品打开世界容器 UI
 
 @onready var _inventory_ui = $"../InventoryUI"
+@onready var _map_visualizer = $"../MapVisualizer"
 
+var _world_container_ui: Node = null   # WorldContainerUI 实例
 var _backpack_id: int = -1
 
 func _ready() -> void:
@@ -17,7 +19,41 @@ func _ready() -> void:
 	_inventory_ui.open_container(_backpack_id)
 	_inventory_ui.visible = false
 
+	# --- 创建世界容器 UI ---
+	var WorldContainerScript = preload("res://ui/world_container_ui.gd")
+	_world_container_ui = WorldContainerScript.new()
+	get_parent().add_child(_world_container_ui)
+
+	# 连接信号：世界容器拖出物品 → 放入背包
+	_world_container_ui.item_taken.connect(_on_world_item_taken)
+
+	# 连接信号：地图物品被点击 → 打开世界容器 UI
+	if _map_visualizer:
+		_map_visualizer.map_item_clicked.connect(_on_map_item_clicked)
+
 	print("[InventoryDemo] 准备就绪 — 按 I 键打开背包")
+
+func _on_map_item_clicked(container_id: int) -> void:
+	print("[InventoryDemo] 打开世界容器: id=%d" % container_id)
+	_world_container_ui.open_container(container_id)
+	# 同时打开背包方便拖拽
+	if not _inventory_ui.visible:
+		_inventory_ui.visible = true
+
+func _on_world_item_taken(item_id: int, from_container_id: int) -> void:
+	# 检查鼠标是否在背包面板区域内
+	var mp := get_viewport().get_mouse_position()
+	var backpack_rect = _inventory_ui.get_panel_rect()
+	if backpack_rect.has_point(mp):
+		# 从世界容器移到背包
+		ItemManagerSingleton.remove_from_container(item_id)
+		ItemManagerSingleton.add_to_container(item_id, _backpack_id)
+		print("[InventoryDemo] 物品 %d 从容器 %d → 背包 %d" % [item_id, from_container_id, _backpack_id])
+		_inventory_ui.refresh(_backpack_id)
+		_world_container_ui.refresh()
+	else:
+		# 没有拖到背包上，物品回到原位
+		_world_container_ui.refresh()
 
 func _create_demo_backpack() -> int:
 	var im := ItemManagerSingleton

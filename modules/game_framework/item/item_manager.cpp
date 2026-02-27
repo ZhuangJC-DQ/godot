@@ -3,6 +3,7 @@
 /**************************************************************************/
 
 #include "item_manager.h"
+#include "item_template_manager.h"
 
 #include "core/object/class_db.h"
 #include "core/string/print_string.h"
@@ -74,21 +75,40 @@ void ItemManager::_bind_methods() {
 uint64_t ItemManager::create_item(int type_id) {
 	uint64_t id = next_id++;
 	Item *item = new Item(id, type_id);
+
+	// 从模板自动填充属性
+	ItemTemplateManager *tmpl_mgr = ItemTemplateManager::get_singleton();
+	if (tmpl_mgr) {
+		const ItemTemplate *tmpl = tmpl_mgr->get_template(type_id);
+		if (tmpl) {
+			item->set_name(tmpl->name);
+			item->set_max_stack(tmpl->max_stack);
+			if (tmpl->is_container) {
+				item->set_max_slots(tmpl->max_slots);
+			}
+			print_line(vformat("[ItemManager] Created item from template: id=%d, type=%d, name=%s", id, type_id, tmpl->name));
+		} else {
+			print_line(vformat("[ItemManager] Created item without template: id=%d, type=%d (no template found)", id, type_id));
+		}
+	} else {
+		print_line(vformat("[ItemManager] Created item (no template manager): id=%d, type=%d", id, type_id));
+	}
+
 	items[id] = item;
 	return id;
 }
 
 uint64_t ItemManager::create_item_with_id(uint64_t id, int type_id) {
 	ERR_FAIL_COND_V_MSG(items.has(id), 0, vformat("Item with ID %d already exists!", id));
-	
+
 	Item *item = new Item(id, type_id);
 	items[id] = item;
-	
+
 	// 更新 next_id 以避免冲突（单机模式使用）
 	if (id >= next_id) {
 		next_id = id + 1;
 	}
-	
+
 	return id;
 }
 

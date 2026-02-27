@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="ItemVisualTemplate" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/item_visuals/item_visual_template.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+type_id = 2
+description = "闪耀的金币，是通用货币。"

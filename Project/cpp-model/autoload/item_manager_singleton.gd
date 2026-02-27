@@ -3,19 +3,28 @@ extends Node
 ## 自动加载，管理所有游戏物品
 
 var item_manager: ItemManager
+var template_manager: ItemTemplateManager
 
 func _ready() -> void:
-	# 创建 ItemManager 实例
+	# 创建 ItemTemplateManager 并加载模板
+	template_manager = ItemTemplateManager.new()
+	var success := template_manager.load_templates_from_json("res://data/item_templates.json")
+	if success:
+		print("[ItemManagerSingleton] Templates loaded successfully")
+	else:
+		push_error("[ItemManagerSingleton] Failed to load item templates!")
+
+	# 创建 ItemManager 实例（会自动使用 ItemTemplateManager 单例）
 	item_manager = ItemManager.new()
-	print("[ItemManager] Singleton initialized")
-	
-	# 初始化物品类型数据（可以从配置文件加载）
-	_initialize_item_types()
+	print("[ItemManagerSingleton] Singleton initialized")
 
 func _exit_tree() -> void:
 	if item_manager:
 		item_manager.clear_all_items()
 		item_manager.free()
+	if template_manager:
+		template_manager.clear_all_templates()
+		template_manager.free()
 
 # === 便捷访问接口 ===
 
@@ -42,12 +51,16 @@ func add_to_container(item_id: int, container_id: int, slot: int = -1) -> bool:
 func get_container_items(container_id: int) -> Array:
 	return item_manager.get_container_items(container_id)
 
-# === 初始化物品类型数据 ===
+# === 模板查询（便捷接口）===
 
-func _initialize_item_types() -> void:
-	# 这里可以从配置文件或数据库加载物品类型
-	# 暂时留空，由具体使用场景初始化
-	pass
+func get_template_data(type_id: int) -> Dictionary:
+	return template_manager.get_template_data(type_id)
+
+func has_template(type_id: int) -> bool:
+	return template_manager.has_template(type_id)
+
+func get_type_ids_by_tag(tag: String) -> Array:
+	return template_manager.get_type_ids_by_tag(tag)
 
 # === 调试接口 ===
 

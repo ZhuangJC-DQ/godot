@@ -3,6 +3,7 @@
 [ext_resource type="Texture2D" uid="uid://x5ycsopehckn" path="res://Back.png" id="1_background"]
 [ext_resource type="Script" uid="uid://bqw25r807mqwr" path="res://map_visualizer.gd" id="2_script"]
 [ext_resource type="Script" uid="uid://bxgat4fhyl5rr" path="res://player.gd" id="3_h2yge"]
+[ext_resource type="Script" path="res://test_item_templates.gd" id="4_test_templates"]
 
 [sub_resource type="PanoramaSkyMaterial" id="PanoramaSkyMaterial_1"]
 panorama = ExtResource("1_background")
@@ -795,3 +796,6 @@ margin = 0.5
 [node name="Camera3D" type="Camera3D" parent="Player/CameraPivot/SpringArm3D" unique_id=1907819962]
 current = true
 fov = 65.0
+
+[node name="TestItemTemplates" type="Node" parent="."]
+script = ExtResource("4_test_templates")

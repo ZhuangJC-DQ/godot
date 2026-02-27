@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="ItemVisualTemplate" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://data/item_visuals/item_visual_template.gd" id="1"]
+
+[resource]
+script = ExtResource("1")
+type_id = 5
+description = "坚固的铁盾，能有效抵挡攻击。"

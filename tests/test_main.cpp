@@ -210,6 +210,7 @@
 
 // Game Framework Tests
 #include "modules/game_framework/tests/test_item_container.h"
+#include "modules/game_framework/tests/test_character.h"
 
 #include "tests/display_server_mock.h"
 #include "tests/test_macros.h"

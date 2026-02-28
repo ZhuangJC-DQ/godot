@@ -1,0 +1,31 @@
+name: 🧪 Game Framework Tests
+on: [push, pull_request]
+
+concurrency:
+  group: game-framework-tests-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  game-framework-tests:
+    runs-on: ubuntu-24.04
+    name: Build & Test Game Framework
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.x"
+
+      - name: Setup SCons
+        run: |
+          python -m pip install scons
+
+      - name: Build Godot with tests
+        run: |
+          scons platform=linuxbsd target=editor dev_build=yes tests=yes compiledb=no -j$(nproc)
+
+      - name: Run Game Framework tests
+        run: |
+          ./bin/godot.linuxbsd.editor.dev.x86_64 --test --test-case="*CharacterManager*" --test-case="*GameCharacter*" --test-case="*ItemManager*" --headless 2>&1

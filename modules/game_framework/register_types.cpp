@@ -37,6 +37,7 @@
 #include "world_manager.h"
 #include "item/item_manager.h"
 #include "item/item_template_manager.h"
+#include "character/character_manager.h"
 
 #include "core/object/class_db.h"
 
@@ -49,6 +50,7 @@ void initialize_game_framework_module(ModuleInitializationLevel p_level) {
 	GDREGISTER_CLASS(WorldManager);
 	GDREGISTER_CLASS(ItemTemplateManager);
 	GDREGISTER_CLASS(ItemManager);
+	GDREGISTER_CLASS(CharacterManager);
 }
 
 void uninitialize_game_framework_module(ModuleInitializationLevel p_level) {

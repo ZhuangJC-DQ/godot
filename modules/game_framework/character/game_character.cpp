@@ -75,7 +75,7 @@ void GameCharacter::remove_custom_property(const String &p_key) {
 }
 
 String GameCharacter::to_string() const {
-	static const char *type_names[] = { "Player", "NPC", "Enemy" };
+	static const char *type_names[CHARACTER_TYPE_MAX] = { "Player", "NPC", "Enemy" };
 	const char *type_str = (type >= 0 && type < CHARACTER_TYPE_MAX) ? type_names[type] : "Unknown";
 
 	return vformat("Character[%d] type=%s name='%s' level=%d hp=%d/%d mp=%d/%d atk=%d def=%d spd=%.1f alive=%s",

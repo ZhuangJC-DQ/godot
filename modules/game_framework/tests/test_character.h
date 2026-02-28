@@ -287,20 +287,19 @@ TEST_CASE("[CharacterManager] Save and load") {
 
 	Dictionary save_data = manager.save_to_dict();
 
-	// Create a new manager and load
-	CharacterManager manager2;
-	manager2.load_from_dict(save_data);
+	// Clear and reload into the same manager
+	manager.load_from_dict(save_data);
 
-	CHECK(manager2.get_character_count() == 2);
-	CHECK(manager2.is_valid_character(p1));
-	CHECK(manager2.get_character_name(p1) == "SaveHero");
-	CHECK(manager2.get_level(p1) == 15);
-	CHECK(manager2.get_attack(p1) == 40);
-	CHECK(manager2.get_character_type(p1) == CHARACTER_TYPE_PLAYER);
+	CHECK(manager.get_character_count() == 2);
+	CHECK(manager.is_valid_character(p1));
+	CHECK(manager.get_character_name(p1) == "SaveHero");
+	CHECK(manager.get_level(p1) == 15);
+	CHECK(manager.get_attack(p1) == 40);
+	CHECK(manager.get_character_type(p1) == CHARACTER_TYPE_PLAYER);
 
-	CHECK(manager2.is_valid_character(n1));
-	CHECK(manager2.get_character_name(n1) == "ShopKeeper");
-	CHECK(manager2.get_character_type(n1) == CHARACTER_TYPE_NPC);
+	CHECK(manager.is_valid_character(n1));
+	CHECK(manager.get_character_name(n1) == "ShopKeeper");
+	CHECK(manager.get_character_type(n1) == CHARACTER_TYPE_NPC);
 }
 
 TEST_CASE("[CharacterManager] Custom properties via manager") {

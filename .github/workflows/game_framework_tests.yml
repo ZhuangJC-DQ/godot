@@ -28,4 +28,4 @@ jobs:
 
       - name: Run Game Framework tests
         run: |
-          ./bin/godot.linuxbsd.editor.dev.x86_64 --test --test-case="*CharacterManager*" --test-case="*GameCharacter*" --test-case="*ItemManager*" --headless 2>&1
+          ./bin/godot.linuxbsd.editor.dev.x86_64 --test --test-case="*CharacterManager*" --test-case="*GameCharacter*" --test-case="*ItemManager*" --headless

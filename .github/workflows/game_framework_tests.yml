@@ -1,6 +1,9 @@
 name: 🧪 Game Framework Tests
 on: [push, pull_request]
 
+permissions:
+  contents: read
+
 concurrency:
   group: game-framework-tests-${{ github.ref }}
   cancel-in-progress: true

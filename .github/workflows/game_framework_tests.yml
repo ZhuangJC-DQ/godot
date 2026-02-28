@@ -29,6 +29,11 @@ jobs:
         run: |
           scons platform=linuxbsd target=editor dev_build=yes tests=yes compiledb=no -j$(nproc)
 
-      - name: Run Game Framework tests
+      - name: Run C++ unit tests
         run: |
-          ./bin/godot.linuxbsd.editor.dev.x86_64 --test --test-case="*CharacterManager*" --test-case="*GameCharacter*" --test-case="*ItemManager*" --headless
+          ./bin/Mu.linuxbsd.editor.dev.x86_64 --test --test-case="*CharacterManager*" --test-case="*GameCharacter*" --test-case="*ItemManager*" --headless
+
+      - name: Run GDScript tests
+        run: |
+          timeout 30 ./bin/Mu.linuxbsd.editor.dev.x86_64 --headless --path ./Project/cpp-model --script res://tests/test_character_manager.gd 2>&1 | tee /tmp/gd_test_output.txt
+          grep -q "ALL TESTS PASSED" /tmp/gd_test_output.txt

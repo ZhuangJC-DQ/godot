@@ -35,5 +35,4 @@ jobs:
 
       - name: Run GDScript tests
         run: |
-          timeout 30 ./bin/Mu.linuxbsd.editor.dev.x86_64 --headless --path ./Project/cpp-model --script res://tests/test_character_manager.gd 2>&1 | tee /tmp/gd_test_output.txt
-          grep -q "ALL TESTS PASSED" /tmp/gd_test_output.txt
+          timeout 30 ./bin/Mu.linuxbsd.editor.dev.x86_64 --headless --path ./Project/cpp-model --script res://tests/test_character_manager.gd

@@ -1,6 +1,6 @@
 extends SceneTree
 ## CharacterManager GDScript 测试脚本
-## 用法: ./bin/Mu --headless --path ./Project/cpp-model --script res://tests/test_character_manager.gd
+## 用法: ./bin/Mu.linuxbsd.editor.dev.x86_64 --headless --path ./Project/cpp-model --script res://tests/test_character_manager.gd
 
 var _pass_count: int = 0
 var _fail_count: int = 0
@@ -26,10 +26,10 @@ func _init() -> void:
 	if _fail_count > 0:
 		print("失败: %d" % _fail_count)
 		print("FAIL")
+		quit(1)
 	else:
 		print("ALL TESTS PASSED")
-	print("========== CharacterManager GDScript 测试结束 ==========\n")
-	quit()
+		quit(0)
 
 
 func assert_equal(actual, expected, description: String) -> void:
